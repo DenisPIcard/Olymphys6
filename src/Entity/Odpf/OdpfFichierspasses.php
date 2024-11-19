@@ -7,6 +7,8 @@ use App\Entity\Odpf\OdpfEquipesPassees;
 use App\Repository\Odpf\OdpfFichierspassesRepository;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
+use Exception;
+use phpDocumentor\Reflection\DocBlock\Tags\TemplateExtends;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -31,7 +33,7 @@ class OdpfFichierspasses
 
     #[ORM\Column(nullable: true)]
     private ?int $typefichier;
-
+    #[Groups('searchable')]
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $nomfichier = null;
 
@@ -102,7 +104,7 @@ class OdpfFichierspasses
     {
         return $this->nomfichier;
     }
-
+    #[Groups(['searchable'])]
     public function setNomfichier(?string $Nomfichier): self
     {
         $this->nomfichier = $Nomfichier;
@@ -290,6 +292,43 @@ class OdpfFichierspasses
             }
         }
         return $this;
+    }
+
+    /**
+     * @throws Exception
+     */
+    #[Groups('searchable')]
+    public function getContent(): string
+    {
+        $text='';
+        if ($this->publie === true) {
+            $parser = new \Smalot\PdfParser\Parser();
+            $pathTypefichier = '';
+            switch ($this->typefichier) {
+                case 0:
+                    $pathTypefichier = 'memoires/publie/';
+                    break;
+                case 1:
+                    $pathTypefichier = 'memoires/publie/';
+                    break;
+                case 2:
+                    $pathTypefichier = 'resumes/publie/';
+                    break;
+                case 3:
+                    $pathTypefichier = 'presentations/publie/';
+                    break;
+
+            }
+            if(file_exists('public/odpf/odpf-archives/' . $this->editionspassees->getEdition() . '/fichiers/' . $pathTypefichier . $this->getNomFichier())) {
+                $pdf = $parser->parseFile('public/odpf/odpf-archives/' . $this->editionspassees->getEdition() . '/fichiers/' . $pathTypefichier . $this->getNomFichier());
+                $text = $pdf->getText();;
+            }
+        }
+
+
+        return $text;
+
+
     }
 
 }
