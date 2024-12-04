@@ -6,6 +6,7 @@ use App\Entity\Odpf\OdpfEditionsPassees;
 use App\Entity\Odpf\OdpfEquipesPassees;
 use App\Entity\Odpf\OdpfFichierspasses;
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
 use Mpdf\Tag\Article;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -51,7 +52,7 @@ class SearchController extends AbstractController
                 ])
                 ->add('submit', SubmitType::class,
                 [
-                    'label' => 'Lancer recherche ...',
+                    'label' => 'Lancer la recherche ...',
                 ])
                 ->getForm();
             $titre=null;
@@ -61,6 +62,9 @@ class SearchController extends AbstractController
             $statResult=null;
             $nsecmax=null;
             $equipes=null;
+            $kwNotFoundByName = null;
+            $kwNotFoundByIndex = null;
+            
            $form->handleRequest($request);
            if ($form->isSubmitted() && $form->isValid()) {
 
@@ -101,6 +105,8 @@ class SearchController extends AbstractController
 
                    // on recherche chaque mot-clé dans le texte avec preg_match_all
                    // si on le trouve, on l'associe au nom de fichier avec son nombre d'occurences
+                   
+                   $kwInFile = false;   // sera vrai si au moins un mot-clé trouvé dans le fichier
                    foreach ($kwArray as $kw) {
                        // recherche sur des mots entiers ?
                        if ($fullword == "true") {
@@ -115,10 +121,18 @@ class SearchController extends AbstractController
                        $success = @preg_match_all($req, $filesContents, $out, PREG_PATTERN_ORDER);
                        if ($success !== false) {           // recherche sans erreur
                            if (count($out[0]) > 0) {       // mot trouvé !
-                               $assocFileKWCount[$fichier][$kw] = count($out[0]);
+                                $assocFileKWCount[$fichier][$kw] = count($out[0]);
+                                $kwInFile = true;
                            }
                        }
                    }
+                   if ($kwInFile) {
+                   foreach ($kwArray as $kw) {
+                    if (!in_array($kw, array_keys($assocFileKWCount[$fichier]))) {
+                        $kwNotFoundByName[$fichier][] = $kw;
+                        // echo "<span class='non-trouve'>
+                        // $kw</span>&nbsp;";
+                    }}}
                }
                // on ajoute pour chaque fichier le nombre total d'occurences de tous les mots clés
                // avec "nb match" comme mot clé.
@@ -151,7 +165,7 @@ class SearchController extends AbstractController
                // fabrication du contenu html exposant le résutat de la recherche
                // en limitant le nombre de sections à nsecmax
                //echo "<span style='font-style:italic;'>" .
-               $statResult=    count($assocFileKWCount) . " fichiers(s) trouvé(s) en " .
+               $statResult = count($assocFileKWCount) . " fichiers(s) trouvé(s) en " .
                    number_format($temps, 3, ',') .'s';
                //    " s</span><br>";
                // $nsec = $nsecmax;
@@ -163,13 +177,14 @@ class SearchController extends AbstractController
                    $idxDoc += 1;
                    // nettoyage du nom de fichier pour ne garder que le titre de l'équipe
                    $edition = $this->doctrine->getRepository(OdpfEditionsPassees::class)->findOneBy(['edition'=>explode('-', $fichier)[0]]);
-                   $numEq=explode('-', $fichier)[2];
-                    !in_array($numEq,$letters)? $equipes[$i]=$this->doctrine->getRepository(OdpfEquipesPassees::class)->findOneBy(['editionspassees'=>$edition,'numero'=>$numEq]):
+                   $numEq = explode('-', $fichier)[2];
+                    !in_array($numEq,$letters)? 
+                        $equipes[$i]=$this->doctrine->getRepository(OdpfEquipesPassees::class)->findOneBy(['editionspassees'=>$edition,'numero'=>$numEq]):
                        $equipes[$i]=$this->doctrine->getRepository(OdpfEquipesPassees::class)->findOneBy(['editionspassees'=>$edition,'lettre'=>$numEq]);
                    /*$titre[$i] = explode('-', $fichier, $limit = 5); // nom rapport = dernier élément
                    $titre[$i] = substr(end($titre[$i]), 0, -4);    // retrait de ".txt"
                    $titre[$i] = str_replace('-', ' ', $titre[$i]);  // élimination des "-"*/
-                   $titre[$i]=$idxDoc.'-'.'Ed '.$edition->getEdition().'- Eq '.$numEq.' - '. $equipes[$i]->getTitreProjet();
+                   $titre[$i]=$idxDoc.' - '.'Edition '.$edition->getEdition().' - Equipe '.$numEq.' - '. $equipes[$i]->getTitreProjet();
                    //echo "<h3>$idxDoc -  $titre</h3><br>"; // le nom du fichier
                    // Affichage de l'édition
 
@@ -192,12 +207,31 @@ class SearchController extends AbstractController
                   $occurence[$i]= $kwCount["nb match"] . " occurences : ";
                    foreach ($kwCount as $kw => $count) {
                        if ($kw == "nb match") continue;
-                       $occurence[$i]= $occurence[$i]. "$kw ($count)";
-                   }
+                       $occurence[$i]= $occurence[$i]. "$kw ($count)" . " ";
+                    }
                    //echo "</span><br>";
                    $i++;
                }
+            foreach ($kwArray as $kw) {
+                if (!in_array($kw, array_keys($kwCount))) {
+                    $kwNotFound[] = $kw;
+                    // echo "<span class='non-trouve'>
+                    // $kw</span>&nbsp;";
+                }
+            }
 
+            $backColor = [];
+            $idx = 0;
+            foreach (array_keys($assocFileKWCount) as $f) {
+                try {
+                    $kwNotFoundByIndex[$idx] = $kwNotFoundByName[$f];
+                    $backColor[$idx] = 'lightgrey';
+                } catch (Exception $e) {
+                    $kwNotFoundByIndex[$idx] = [];
+                    $backColor[$idx] = 'lightgreen';
+                }
+                $idx++;
+            }
            }
 
 
@@ -206,7 +240,9 @@ class SearchController extends AbstractController
             'statresult'=>$statResult,
             'pdfUrl'=>$pdfUrl,
             'nbKeyWord'=>$nbKeyWord,
-            'occurence'=>$occurence,
+            'kwNotFound'=>$kwNotFoundByIndex,
+            'backColor' => $backColor,
+            'occurence'=>$occurence ?? -1,
             'nsecmax'=>$nsecmax,
             'equipes'=>$equipes]);
     }

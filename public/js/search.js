@@ -1,3 +1,7 @@
+/**
+ * fonctions utilisées pour la recherche des mémoires
+ */
+
 function lanceRecherche() {
     connectToDatabase();
     document.getElementById("result").innerHTML = "Recherche en cours ...";
@@ -29,11 +33,14 @@ function showResult() {
 // Cette fonction est là pour essayer de pallier la lenteur de la première recherche sur EX2
 // Cette lenteur est probablement liée à la mise en cache sur le serveur des fichiers texte
 // dans lesquels s'effectue la recherche.
-// on lance une requête asynchrone sur un fichier php qui ne fait rien d'autre que de lire les textes.
-// Cette foncton est lancée au chargement de cette page.
-// Sur EX2, la mise en cache des 500 fichiers texte met environ 10s.
+// Elle doit être lancée par une requête asynchrone sur un fichier php qui ne fait rien d'autre 
+// que de lire les textes.
+// Cette foncton est lancée au chargement de la page de recherche.
+// 
+// *************** A vérifier : ***************
+// je suspecte que sur EX2, la mise en cache des 500 fichiers texte met environ 10s.
 // Le fait de lancer la lecture en // sur le serveur doit permettre la mise en cache pendant que
-// l'utilisateur interagit avec la page courante.
+// l'utilisateur interagit avec la page de recherche.
 function preloadTexts() {
     // appel via AJAX de la lecture des textes
     var xmlhttp = new XMLHttpRequest();
@@ -48,5 +55,14 @@ function toggleHelp() {
     }
 }
 
+/** 
+ * 
+ * Ces lignes de code doivent être dans la page de recherche, et le lancement doit être 
+ * asynchrone par 
+ * setTimeout(() => {
+            preloadTexts()
+        }, 0)
+ * 
 // lancement asynchrone de la lecture des textes
 preloadTexts()
+*/

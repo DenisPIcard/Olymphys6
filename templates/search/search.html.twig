@@ -83,20 +83,28 @@
         </div>
     {{ form_end(form) }}
     <div id="result">
-            {% if occurence ==null%}
-                             aucune recherche effectuée...
-            {% else%}
-        {{ statresult }}, {{ min(titre|length, nsecmax) }} affichés :
-
-
-                {% for i in 0..min(titre|length-1, nsecmax-1) %}
-                    <h4>{{ titre[i] }}</h4>
-                 &nbsp;    &nbsp;    &nbsp;    &nbsp;<a href="{{pdfUrl[i] }}" target='_blank'>Afficher le mémoire</a> - <a href="{{path('odpf_editionspassees_equipe',{'id': equipes[i].id})}}" target='_blank'>Voir la page de l'équipe</a> <br>
-                    <span style='font-style:italic;'> <b>mots-clés trouvés : <span style='background-color:yellow;'>{{ occurence[i] }}</span></b></span>
-                    <br>
-                    <br>
-                {% endfor%}
-            {% endif %}
+        <p>
+        {% if occurence == null %}
+            aucune recherche effectuée...
+        {% elseif occurence == -1 %}
+            {{ statresult }}
+        {% else %}
+            {{ statresult }}, {{ min(titre|length, nsecmax) }} affichés :
+        </p>
+            {% for i in 0..min(titre|length-1, nsecmax-1) %}
+                <h4 style="background-color: {{ backColor[i] }};">{{ titre[i] }}</h4>
+                &nbsp; &nbsp; &nbsp; &nbsp;
+                <a href="{{pdfUrl[i] }}" target='_blank'>Afficher le mémoire</a> 
+                - 
+                <a href="{{path('odpf_editionspassees_equipe',{'id': equipes[i].id})}}" target='_blank'>Voir la page de l'équipe</a>
+                <br>
+                <span style='font-style:italic;'> <b>mots-clés trouvés : {{ nbKeyWord[i] }} - {{ occurence[i] }}</b></span>
+                {% for knf in kwNotFound[i] %}
+                   <b> <span style='font-style:italic; text-decoration: line-through;'> {{ knf }} </span>&nbsp; </b>
+                {% endfor %} 
+                <br><br>
+            {% endfor%}
+        {% endif %}
 
     </div>
     </div>
