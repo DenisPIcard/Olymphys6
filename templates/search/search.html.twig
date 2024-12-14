@@ -1,112 +1,146 @@
 {% extends('base1.html.twig') %}
 {% block titre3 %}
-    <h1 style="text-align: center;">Archives des Olympiades de Physique</h1>
+	<h1 style="text-align: center;">Archives des Olympiades de Physique</h1>
 {% endblock %}
 
 {% block body %}
-    <div class="container">
-        <div class="accordion" id="accordionExample">
-            <div class="card">
-                <div class="card-header" id="headingOne">
-                    <h2 class="mb-0">
-                        <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                            Aide pour la recherche des mémoires
-                        </button>
-                    </h2>
-                </div>
-            </div>
-            <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
-                <div class="card-body">
-                    <div class="aide" id="divAide">
-                        <h4>Recherche standard</h4>
-                        <p>Pour rechercher un rapport publié par les Olympiades De la Physique France,
-                            Vous pouvez taper dans la zone de texte un ou plusieurs mots-clés séparés par des espaces.<br>
-                            Les documents proposés peuvent contenir un ou plusieurs mots demandés qui seront ordonnés :
-                        <ul>
-                            <li>par nombre de mots-clés trouvés décroissant</li>
-                            <li>puis par nombre d'occurences de ces mots-clés dans les documents</li>
-                        </ul>
-                        </p>
-                        <p>
-                            Le nombre maximal de résultats peut être fixé à 25, 50 ou 100 dans une liste déroulante.
-                        </p>
-                        <p>
-                            La case à cocher "Mots Entiers" permet de définir le mode de recherche souhaité :
-                        <ul>
-                            <li>cochée : seuls les mots-clés entiers sont détectés</li>
-                            <li>non cochée : le mot-clé peut alors être une partie d'un mot plus long</li>
-                        </ul>
-                        <h4>Recherche avancée</h4>
-                        <p>Chaque mot-clé peut être une <em>expression régulière</em> conforme au standard Perl.<br>
-                            On pourra consulter par exemple la page
-                            <a href="https://fr.wikipedia.org/wiki/Expression_r%C3%A9guli%C3%A8re" target="_blank">Expressions régulières</a>
-                            sur Wikipédia pour plus d'informations. </p>
-                        <p>Exemples simples :</p>
-                        <ul>
-                            <li><code>"réseau?"</code> va trouver <code>"reseau"</code> ou <code>"réseaux"</code></li>
-                            <li><code>"mot(eur|if?)"</code> va trouver <code>"moteur"</code>, <code>"motif"</code> ou <code>"motifs"</code></li>
-                            <li><code>"longueur\sd'onde"</code> va trouver <code>"longueur d'onde"</code></li>
-                        </ul>
-                        </p>
-                    </div>
-                </div>
-            </div>
+	<div class="container">
+		<div class="accordion" id="accordionExample">
+			<div class="card">
+				<div class="card-header" id="headingOne">
+					<h2 class="mb-0">
+						<button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+							Aide pour la recherche des mémoires
+						</button>
+					</h2>
+				</div>
+			</div>
+			<div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
+				<div class="card-body">
+					<div class="aide" id="divAide">
+						<h4>Recherche standard</h4>
+						<p>Pour rechercher un rapport publié par les Olympiades De la Physique France,
+														                            Vous pouvez taper dans la zone de texte un ou plusieurs mots-clés séparés par des espaces.<br>
+							Les documents proposés peuvent contenir un ou plusieurs mots demandés qui seront ordonnés :
+							<ul>
+								<li>par nombre de mots-clés trouvés décroissant</li>
+								<li>puis par nombre d'occurences de ces mots-clés dans les documents</li>
+							</ul>
+						</p>
+						<p>
+							Les documents contenant tous les mots-clés seront donc proposés en tête de liste, mis en évidence avec une couleur de fond différente.
+						</p>
+						<p>
+							Le nombre maximal de résultats peut être fixé à 25, 50 ou 100 dans une liste déroulante.
+						</p>
+						<p>
+							La case à cocher "Mots Entiers" permet de définir le mode de recherche souhaité :
+							<ul>
+								<li>cochée : seuls les mots-clés entiers sont détectés</li>
+								<li>non cochée : le mot-clé peut alors être une partie d'un mot plus long</li>
+							</ul>
+							<h4>Recherche avancée</h4>
+						</p>
+						<p>Chaque mot-clé peut être une
+							<em>expression régulière</em>
+							conforme au standard Perl.<br>
+							On pourra consulter par exemple la page
+							<a href="https://fr.wikipedia.org/wiki/Expression_r%C3%A9guli%C3%A8re" target="_blank">Expressions régulières</a>
+							sur Wikipédia pour plus d'informations.
+						</p>
+						<p>Exemples simples :</p>
+						<ul>
+							<li>
+								<code>"réseau?"</code>
+								va trouver
+								<code>"reseau"</code>
+								ou
+								<code>"réseaux"</code>
+							</li>
+							<li>
+								<code>"mot(eur|if?)"</code>
+								va trouver
+								<code>"moteur"</code>,
+								<code>"motif"</code>
+								ou
+								<code>"motifs"</code>
+							</li>
+							<li>
+								<code>"longueur\sd'onde"</code>
+								va trouver
+								<code>"longueur d'onde"</code>
+							</li>
+						</ul>
+					</p>
+				</div>
+			</div>
+		</div>
 
-        </div>
-        <div class="row">
-            <div class="col">
+	</div>
+	<div class="row">
+		<div class="col">
 
-            <b>Mot(s) à rechercher dans les mémoires : </b>
-            </div>
-        </div>
-        {{ form_start(form) }}
-        <div class="row">
-            <div class="col">
-                {{ form_row(form.text) }}
-            </div>
-            <div class="col">
-                {{ form_row(form.fullword) }}
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-6" style="text-align: right">
-            Nombre maxi de résultats :
-            </div>
-             <div  class="col-6"  style="text-align: left">
-                 {{ form_row(form.nbres) }}
-            </div>
-        </div>
-        <div class="row">
-            <div class="col" style="text-align: center">
-            {{ form_row(form.submit) }}
-            </div>
-        </div>
-    {{ form_end(form) }}
-    <div id="result">
-        <p>
-        {% if occurence == null %}
-            aucune recherche effectuée...
-        {% elseif occurence == -1 %}
-            {{ statresult }}
-        {% else %}
-            {{ statresult }}, {{ min(titre|length, nsecmax) }} affichés :
-        </p>
-            {% for i in 0..min(titre|length-1, nsecmax-1) %}
-                <h4 style="background-color: {{ backColor[i] }};">{{ titre[i] }}</h4>
-                &nbsp; &nbsp; &nbsp; &nbsp;
-                <a href="{{pdfUrl[i] }}" target='_blank'>Afficher le mémoire</a> 
-                - 
-                <a href="{{path('odpf_editionspassees_equipe',{'id': equipes[i].id})}}" target='_blank'>Voir la page de l'équipe</a>
-                <br>
-                <span style='font-style:italic;'> <b>mots-clés trouvés : {{ nbKeyWord[i] }} - {{ occurence[i] }}</b></span>
-                {% for knf in kwNotFound[i] %}
-                   <b> <span style='font-style:italic; text-decoration: line-through;'> {{ knf }} </span>&nbsp; </b>
-                {% endfor %} 
-                <br><br>
-            {% endfor%}
-        {% endif %}
-
-    </div>
-    </div>
-
-{% endblock %}
+			<b>Mot(s) à rechercher dans les mémoires :
+			</b>
+		</div>
+	</div>
+	{{ form_start(form) }}
+	<div class="row">
+		<div class="col">
+			{{ form_row(form.text) }}
+		</div>
+		<div class="col">
+			{{ form_row(form.fullword) }}
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-6" style="text-align: right">
+			Nombre maxi de résultats :
+		</div>
+		<div class="col-6" style="text-align: left">
+			{{ form_row(form.nbres) }}
+		</div>
+	</div>
+	<div class="row">
+		<div class="col" style="text-align: center">
+			{{ form_row(form.submit) }}
+		</div>
+	</div>
+	{{ form_end(form) }}
+	<div id="result">
+		<p>
+			{% if occurence == null %}
+				aucune recherche effectuée...
+			{% elseif occurence == -1 %}
+				{{ statresult }}
+			{% else %}
+				{{ statresult }},
+				{{ min(titre|length, nsecmax) }}
+				affichés :
+			</p>
+			{% for i in 0..min(titre|length-1, nsecmax-1) %}
+				<h4 style="background-color: {{ backColor[i] }};">{{ titre[i] }}</h4>
+				&nbsp; &nbsp; &nbsp; &nbsp;
+				<a href="{{pdfUrl[i] }}" target='_blank'>Afficher le mémoire</a>
+				-
+				<a href="{{path('odpf_editionspassees_equipe',{'id': equipes[i].id})}}" target='_blank'>Voir la page de l'équipe</a>
+				<br>
+				<span style='font-style:italic;'>
+					<b>mots-clés trouvés :
+						{{ nbKeyWord[i] }}
+						-
+						{{ occurence[i] }}</b>
+				</span>
+				{% for knf in kwNotFound[i] %}
+					<b>
+						<span style='font-style:italic; text-decoration: line-through;'>
+							{{ knf }}
+						</span>&nbsp;
+					</b>
+				{% endfor %}
+				<br><br>
+				{% endfor%}
+			{% endif %}
+		</p>
+	</div>
+</div>{% endblock %}

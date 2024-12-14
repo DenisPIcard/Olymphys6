@@ -62,6 +62,7 @@ class SearchController extends AbstractController
             $statResult=null;
             $nsecmax=null;
             $equipes=null;
+            $backColor = [];
             $kwNotFoundByName = null;
             $kwNotFoundByIndex = null;
             
@@ -220,7 +221,6 @@ class SearchController extends AbstractController
                 }
             }
 
-            $backColor = [];
             $idx = 0;
             foreach (array_keys($assocFileKWCount) as $f) {
                 try {
