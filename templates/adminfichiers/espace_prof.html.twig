@@ -112,6 +112,11 @@
                            class="btn btn-primary">Modifier </a>
                     {% endif %}
                 </div>
+                {% if equipe.selectionnee==true %}
+
+                    <a href="{{ path('invitations', {'editionIdequipeId' : equipe.edition.id~'-'~equipe.id } ) }}" type="button"
+                       class="btn btn-warning">Invitations Marseille</a>
+                {% endif %}
                 <div class="col">
                     {% if is_granted('ROLE_PROF') %}
 
@@ -128,7 +133,7 @@
 
     <hr>
 
-
+{% if equipe.inscrite==true %}
     {# ############################# LISTE DES FICHIERS ################################################################ #}
 
     {% include 'adminfichiers/listefichiers.html.twig' %}
@@ -140,7 +145,7 @@
     {# ############################# LISTE DES AUTORISATIONS PHOTOS ##################################################### #}
 
     {% include 'adminfichiers/listeautorisations.html.twig' %}
-
+{% endif %}
     {# ############################# FIN DE LA PAGE ESPACE PROFESSEUR ################################################### #}
     <div class="well">
     {% if is_granted('ROLE_COMITE') or is_granted('ROLE_JURYCIA') or is_granted('ROLE_JURY') or is_granted('ROLE_ORGACIA') %}

@@ -74,7 +74,8 @@ class UserCrudController extends AbstractCrudController
             'ROLE_JURY' => 'ROLE_JURY',
             'ROLE_JURYCIA' => 'ROLE_JURYCIA',
             'ROLE_ORGACIA' => 'ROLE_ORGACIA',
-            'ROLE_COMITE' => 'ROLE_COMITE'])
+            'ROLE_COMITE' => 'ROLE_COMITE',
+            'ROLE_SECRETARIAT_JURY'=>'ROLE_SECRETARIAT_JURY'])
             ->setFormTypeOption('multiple', true);
         $password = Field::new('password')->setFormType(PasswordType::class)->onlyOnForms();
         if ($pageName == 'edit') {
@@ -98,7 +99,8 @@ class UserCrudController extends AbstractCrudController
                 'ROLE_JURY' => 'ROLE_JURY',
                 'ROLE_JURYCIA' => 'ROLE_JURYCIA',
                 'ROLE_ORGACIA' => 'ROLE_ORGACIA',
-                'ROLE_COMITE' => 'ROLE_COMITE'])
+                'ROLE_COMITE' => 'ROLE_COMITE',
+                'ROLE_SECRETARIAT_JURY'=>'ROLE_SECRETARIAT_JURY'])
                 ->setFormTypeOption('multiple', true)->onlyOnForms(),
             TextField::new('uai')->onlyOnIndex(),
             TextField::new('plainPassword', 'Mot de passe')->onlyOnForms(),

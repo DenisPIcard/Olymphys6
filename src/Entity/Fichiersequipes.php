@@ -112,7 +112,7 @@ class Fichiersequipes //extends BaseMedia
           return $this;*/
     }
 
-    public function getId(): int
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -274,7 +274,6 @@ class Fichiersequipes //extends BaseMedia
 
         return $this;
     }
-
     public function directoryName(): string
     {
         $path = $this->edition->getEd() . '/fichiers';

@@ -42,6 +42,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Orm\EntityRepository;
 use EasyCorp\Bundle\EasyAdminBundle\Provider\AdminContextProvider;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\String\UnicodeString;
@@ -162,7 +163,7 @@ class EquipesadminCrudController extends AbstractCrudController
             ->add(Crud::PAGE_INDEX, $tableauexcel)
             ->setPermission(Action::NEW, 'ROLE_SUPER_ADMIN')
             ->setPermission(Action::DELETE, 'ROLE_SUPER_ADMIN')
-            ->setPermission(Action::EDIT, 'ROLE_SUPER_ADMIN');
+            ->setPermission(Action::EDIT, 'ROLE_COMITE');
 
     }
 
@@ -177,26 +178,29 @@ class EquipesadminCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         $session = $this->requestStack->getSession();
+        $listeCentres = $this->doctrine->getManager()->getRepository(Centrescia::class)->findBy(['actif' => true], ['centre' => 'ASC']);
+
         if ($pageName == 'edit') {
             $idEquipe = $this->adminContextProvider->getContext()->getRequest()->query->get('entityId');
             $equipe = $this->doctrine->getRepository(Equipesadmin::class)->findOneBy(['id' => $idEquipe]);
 
             $uai = $equipe->getUai();
-            $listProfs = $this->doctrine->getManager()->getRepository(User::class)->findBy(['uai' => $uai, 'isActive' => true]);
+            $listProfs = $this->doctrine->getManager()->getRepository(User::class)->findBy(['uai' => $uai, 'isActive' => true]);//pour que seuls les profs rattachés au lycée de l'équipe soient proposés dans le choix des profs du formulaire d'édition
             $listeCentres = $this->doctrine->getManager()->getRepository(Centrescia::class)->findBy(['actif' => true], ['centre' => 'ASC']);
         } else {
             $listProfs = [];
-            $listeCentres = [];
+            //$listeCentres = [];
         }
         $repositoryUser = $this->doctrine->getManager()->getRepository(User::class);
         $numero = IntegerField::new('numero', 'N°');
         $lettre = ChoiceField::new('lettre')
             ->setChoices(['A' => 'A', 'B' => 'B', 'C' => 'C', 'D' => 'D', 'E' => 'E', 'F' => 'F', 'G' => 'G', 'H' => 'H', 'I' => 'I', 'J' => 'J', 'K' => 'K', 'L' => 'L', 'M' => 'M', 'N' => 'N', 'O' => 'O', 'P' => 'P', 'Q' => 'Q', 'R' => 'R', 'S' => 'S', 'T' => 'T', 'U' => 'U', 'V' => 'V', 'W' => 'W', 'X' => 'X', 'Y' => 'Y', 'Z' => 'Z']);
         $titreProjet = TextField::new('titreProjet', 'Projet');
-        $centre = AssociationField::new('centre')->setFormTypeOption('choices', $listeCentres)->setFormTypeOption('required', false);
+        $centre = AssociationField::new('centre')->setFormTypeOptions(['choices' => $listeCentres, 'required' => false]);
         $IdProf1 = AssociationField::new('idProf1', 'Prof1')->setColumns(1)->setFormTypeOptions(['choices' => $listProfs])->setFormTypeOption('required', false);
         $IdProf2 = AssociationField::new('idProf2', 'Prof2')->setColumns(1)->setFormTypeOptions(['choices' => $listProfs])->setFormTypeOption('required', false);
         $selectionnee = BooleanField::new('selectionnee');
+        $selectionneeForm = BooleanField::new('selectionnee')->renderAsSwitch(false);
         $id = IntegerField::new('id', 'ID');
         $nomLycee = TextField::new('nomLycee', 'Lycée')->setColumns(10);
         $denominationLycee = TextField::new('denominationLycee');
@@ -239,7 +243,7 @@ class EquipesadminCrudController extends AbstractCrudController
 
                 return [$lyceePays, $lyceeAcademie, $nomLycee, $lyceeAdresse, $lyceeCP, $lyceeLocalite, $uai];
             } else {
-                return [$numero, $lettre, $centreCentre, $titreProjet, $prof1, $prof2, $nomLycee, $lyceeLocalite, $lyceeAcademie, $selectionnee, $contribfinance, $nbeleves, $inscrite, $origineprojet, $createdAt];
+                return [$numero, $lettre, $centreCentre, $titreProjet, $IdProf1, $IdProf2, $nomLycee, $lyceeLocalite, $lyceeAcademie, $selectionnee, $contribfinance, $nbeleves, $inscrite, $origineprojet, $createdAt];
             }
         } elseif (Crud::PAGE_DETAIL === $pageName) {
 
@@ -253,7 +257,7 @@ class EquipesadminCrudController extends AbstractCrudController
         } elseif (Crud::PAGE_NEW === $pageName) {
             return [$edition, $numero, $lettre, $uaiId, $lyceeAcademie, $titreProjet, $centre, $IdProf1, $IdProf2];
         } elseif (Crud::PAGE_EDIT === $pageName) {
-            return [$edition, $numero, $lettre, $uaiId, $lyceeAcademie, $lyceeLocalite, $titreProjet, $centre, $selectionnee, $IdProf1, $IdProf2, $inscrite, $description, $contribfinance, $partenaire, $retiree];
+            return [$edition, $numero, $lettre, $uaiId, $lyceeAcademie, $lyceeLocalite, $titreProjet, $centre, $selectionneeForm, $IdProf1, $IdProf2, $inscrite, $description, $contribfinance, $partenaire, $retiree];
         }
 
     }
@@ -685,4 +689,5 @@ class EquipesadminCrudController extends AbstractCrudController
 
         parent::updateEntity($entityManager, $entityInstance); // TODO: Change the autogenerated stub
     }
+
 }

@@ -132,3 +132,13 @@
 
 }
 
+.zoom {
+    position: relative;
+    width: 100px;
+    z-index: 2;
+    margin: 0 auto;
+}
+.zoom:hover {
+    transform: scale(3);
+    z-index: 100;
+}

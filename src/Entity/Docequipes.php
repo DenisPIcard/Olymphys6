@@ -38,6 +38,9 @@ class Docequipes
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $description = null;
 
+    #[ORM\Column(length: 6, nullable: true)]
+    private ?string $concours = null;
+
 
     public function getId(): ?int
     {
@@ -125,5 +128,17 @@ class Docequipes
         $name=explode('.',$this->fichierFile->getClientOriginalName())[count(explode('.',$this->fichierFile->getClientOriginalName())) - 2];
         $slugger = new AsciiSlugger();
         return $slugger->slug($name).$this->fichierFile->getExtension();
+    }
+
+    public function getConcours(): ?string
+    {
+        return $this->concours;
+    }
+
+    public function setConcours(?string $concours): static
+    {
+        $this->concours = $concours;
+
+        return $this;
     }
 }

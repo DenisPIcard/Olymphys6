@@ -37,8 +37,8 @@ class CustomEquipeFilterType extends AbstractType
         $edition = $this->requestStack->getSession()->get('edition');
         $listeEquipes = $this->doctrine->getRepository(Equipesadmin::class)->createQueryBuilder('e')
             ->select('e')
-            ->leftJoin('e.edition','ed')
-            ->addOrderBy('ed.ed','DESC')
+            ->leftJoin('e.edition','edi')
+            ->addOrderBy('edi.ed','DESC')
             ->addOrderBy('e.numero', 'ASC')
             ->getQuery()->getResult();
 
@@ -46,7 +46,10 @@ class CustomEquipeFilterType extends AbstractType
             'comparison_type_options' => ['type' => 'entity'],
             'value_type' => EntityType::class,
             'class' => Equipesadmin::class,
-            'choices' => $listeEquipes
+            'choices' => $listeEquipes,
+            'choice_label' => function (Equipesadmin $equipesadmin) {
+            return $equipesadmin->getEdition().'-'.$equipesadmin->getNumero().'-'.$equipesadmin->getTitreProjet();
+    }
         ]);
 
     }

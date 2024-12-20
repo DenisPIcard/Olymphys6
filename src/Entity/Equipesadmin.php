@@ -92,7 +92,7 @@ class Equipesadmin
     #[ORM\ManyToOne(targetEntity: User::class)]
     private ?User $idProf2;
 
-    #[ORM\Column(nullable: true)]
+    #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
     protected ?bool $inscrite = true;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
@@ -104,7 +104,7 @@ class Equipesadmin
     #[ORM\ManyToOne]
     private ?Edition $edition;
 
-    #[ORM\Column(nullable: true)]
+    #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
     private ?bool $retiree = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -122,8 +122,8 @@ class Equipesadmin
 
     public function __toString(): string
     {
-        $ed = $this->edition->getEd();
 
+       $ed= $this->getEdition()->getEd();//génère une erreur dans les filtres d'easyadmin, a remplacer par choice_label dans le CustomEquipeFichierFilterType
         if ($this->getLettre() != null) {
             return $ed . '-' . $this->numero . '-' . $this->lettre . '-' . $this->titreProjet;
         } else {
@@ -179,8 +179,10 @@ class Equipesadmin
     public function getInfoequipe(): ?string
     {
         $nomcentre = '';
-
-        $this->getLettre() === null ? $Numero = $this->getNumero() : $Numero = $this->numero . '-' . $this->getLettre();
+        $Numero = $this->numero;
+        if ($this->getLettre() != null) {
+            $Numero = $this->numero . '-' . $this->getLettre();
+        }
         $edition = $this->getEdition();
         if ($centre = $this->getCentre()) {
             $nomcentre = $this->getCentre()->getCentre() . '-';
@@ -190,7 +192,7 @@ class Equipesadmin
         $nom_equipe = $this->getTitreProjet();
         $ville = $this->getLyceeLocalite();
 
-        $infoequipe = $edition->getEd() . '-' . 'Eq ' . $Numero . ' - ' . $nom_equipe . '-' . $ville;
+        $infoequipe = $edition->getEd() . '-' . 'Eq ' . $Numero . ' - ' . $nom_equipe . ' - ' . $ville;
         return $infoequipe;
     }
 

@@ -9,5 +9,8 @@
 {% endblock %}
 
 {% block body %}
-
+    {% if app.session.get('info')!=null %}
+        {{ include('modales/modale_info.html.twig') }}
+        {{app.session.set('info', null )}}
+    {% endif %}
 {% endblock %}

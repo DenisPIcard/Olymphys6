@@ -202,6 +202,7 @@ class ProfesseursCrudController extends AbstractCrudController
                 $equipes = $repositoryEquipes->createQueryBuilder('e')
                     ->where('e.edition =:edition')
                     ->setParameter('edition', $edition)
+                    ->andWhere('e.inscrite = 1')
                     ->andWhere('e.idProf1 =:user OR e.idProf2 =:user')
                     ->setParameter('user', $prof->getUser())
                     ->getQuery()->getResult();
@@ -253,6 +254,7 @@ class ProfesseursCrudController extends AbstractCrudController
         $queryBuilder = $repositoryProfs->createQueryBuilder('p')
             ->leftJoin('p.equipes', 'eqs')
             ->andWhere('eqs.edition =:edition')
+            ->andWhere('eqs.inscrite = 1')
             ->setParameter('edition', $edition)
             ->leftJoin('p.user', 'u')
             ->orderBY('u.nom', 'ASC');
@@ -265,6 +267,7 @@ class ProfesseursCrudController extends AbstractCrudController
                 $equipes = $repositoryEquipes->createQueryBuilder('e')
                     ->where('e.edition =:edition')
                     ->setParameter('edition', $edition)
+                    ->andWhere('e.inscrite = 1')
                     ->andWhere('e.idProf1 =:user OR e.idProf2 =:user')
                     ->setParameter('user', $prof->getUser())
                     ->getQuery()->getResult();

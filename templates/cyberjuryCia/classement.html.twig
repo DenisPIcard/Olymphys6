@@ -50,6 +50,7 @@
             </thead>
             <tbody>
             {% for rang in rangs %}
+                {% if rang.equipe.inscrite==true %}
                 <tr>
                     <th>{{ rang.rang }}  </th>
                     {% if rang.rang <= centre.nbselectionnees %}
@@ -99,6 +100,7 @@
                     {% endif %}
 
                 </tr>
+                {% endif %}
             {% endfor %}
 
             </tbody>

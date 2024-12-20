@@ -7,8 +7,16 @@
     {% else %}
         {% set numEd=edition.ed %}
     {% endif %}
-    {{ numEd }}   Les photos des épreuves nationales {% endblock %}
+    {{ numEd }}   Les photos des épreuves nationales
+{% endblock %}
+{% block navigation %}
+    {% set centre=null %}
+    {% if is_granted('ROLE_ORGACIA') %}
+        {% set centre=app.user.centrecia %}
+    {% endif %}
+    {{ include ("cyberjuryCia/navigation.html.twig") }}
 
+{% endblock %}
 
 
 {% block titre3 %}

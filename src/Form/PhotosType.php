@@ -50,7 +50,8 @@ class PhotosType extends AbstractType
                 ->leftJoin('e.edition','ed')
                 ->addOrderBy('ed.ed','DESC');
         if ($valSel==false){
-            $qb->andWhere('e.numero <100');
+            $qb->andWhere('e.numero <100')//Pour ne pas avoir les équipes "techniques" du national
+            ->orWhere('e.numero >200');//pour avoir les équipes "techniques" des CIA
             $infoEquipe='infoequipe';
         }
         if ($valSel==true){

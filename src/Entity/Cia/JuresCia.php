@@ -32,9 +32,11 @@ class JuresCia
     #[ORM\Column(name: 'initialesJure', length: 4, nullable: true)]
     private ?string $initialesJure = null;
 
+    /**
+     * @var Collection<int, NotesCia>
+     */
     #[ORM\OneToMany(mappedBy: "jure", targetEntity: NotesCia::class)]
     private ?Collection $notesj;
-
 
 
     #[ORM\ManyToOne]
@@ -43,7 +45,7 @@ class JuresCia
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $email = null;
 
-    #[ORM\Column(type: Types::JSON, nullable: true)]//Tableau contenant l'Id des  équipes pour lesquelles le jurés est rapporteur
+    #[ORM\Column(type: Types::JSON, nullable: true)]//Tableau contenant le n° des  équipes pour lesquelles le jurés est rapporteur
     private ?array $rapporteur = [];
 
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
@@ -58,6 +60,7 @@ class JuresCia
     #[ORM\ManyToMany(targetEntity: Equipesadmin::class)]
     private Collection $equipes;
 
+
     /**
      * Constructor
      */
@@ -65,6 +68,7 @@ class JuresCia
     {
         $this->notesj = new ArrayCollection();
         $this->equipes = new ArrayCollection();
+
 
     }
 
@@ -99,32 +103,22 @@ class JuresCia
 
 
     /**
-     * Add notesj
-     *
-     * @param NotesCia $notesj
-     *
-     * @return JuresCia|null
-     */
-    public function addNotesj(NotesCia $notesj): ?JuresCia
-    {
-        $this->notesj[] = $notesj;
-
-        //On relie l'équipe à "une ligne note"
-        $notesj->setJureCia($this);
-
-        return $this;
-    }
-
-    /**
-     * Get notesj
-     *
-     * @return ArrayCollection|Collection|null
+     * @return Collection<int, NotesCia>
      */
     public function getNotesj(): ArrayCollection|Collection|null
     {
         return $this->notesj;
     }
 
+    public function addNotesj(NotesCia $noteCia): static
+    {
+        if (!$this->notesj->contains($noteCia)) {
+            $this->notesj->add($noteCia);
+            $noteCia->setJure($this);
+        }
+
+        return $this;
+    }
     public function getNom(): string
     {
         return $this->getNomJure() . ' ' . $this->getPrenomJure();
@@ -280,6 +274,19 @@ class JuresCia
     public function setLecteur(?array $lecteur): static
     {
         $this->lecteur = $lecteur;
+
+        return $this;
+    }
+
+
+    public function removeNotesCia(NotesCia $notesCia): static
+    {
+        if ($this->notesCias->removeElement($notesCia)) {
+            // set the owning side to null (unless already changed)
+            if ($notesCia->getJure() === $this) {
+                $notesCia->setJure(null);
+            }
+        }
 
         return $this;
     }

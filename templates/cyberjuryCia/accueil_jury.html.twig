@@ -18,53 +18,99 @@
     <hr>
     <a href="{{ asset('odpf/odpf-documents/CyberjuryCia_jure.pdf') }}" type="button" class="btn btn-warning" target="_blank">Aide du cyberjury</a>
     <hr>
-    {% for equipes in listeEquipes %}
-        {% if equipes.numero in progression|keys %}
 
-            {% set numero = equipes.numero %}
-            <p>
-                <a
-                        {% if (progression[numero]) %}  class="btn btn-outline-primary btn-lg"
-                        {% else %}class ="btn btn-primary btn-lg"
-                        {% endif %}
-                        href="{{ path('cyberjuryCia_evaluer_une_equipe', {'id': equipes.id} ) }}">{{ equipes.numero }}</a>
-                {{ equipes.titreProjet }}
+    {% if horaires|length == listeEquipes|length %}
+        <div>Dans l'ordre chronologique de passage des équipes</div>
+        {% for horaire in horaires %}
+            {% if horaire.equipe.numero in progression|keys and horaire.equipe.inscrite==true %}
 
-                {% for key,mem in memoires %}
-                    {% if key == numero %}
-                        {% if mem!=null %}
-                            {% if mem.publie==false %}
-                                <a href="{{ asset('odpf/odpf-archives/'~equipes.edition.ed~'/fichiers/memoires/prive/'~ mem.fichier) }}"
-                                   class="fas fa-book-reader"
-                                   title="Accéder au mémoire de l'équipe" target="_blank"> </a>
+                {% set numero = horaire.equipe.numero %}
+                <p>
+                    <a
+                            {% if (progression[numero]) %}  class="btn btn-outline-primary btn-lg"
+                            {% else %}class ="btn btn-primary btn-lg"
                             {% endif %}
-                            {% if mem.publie==true %}
-                                <a href="{{ asset('odpf/odpf-archives/'~equipes.edition.ed~'/fichiers/memoires/public/'~ mem.fichier) }}"
-                                   class="fas fa-book-reader"
-                                   title="Accéder au mémoire de l'équipe" target="_blank"> </a>
+                            href="{{ path('cyberjuryCia_evaluer_une_equipe', {'id': horaire.equipe.id} ) }}">{{ horaire.equipe.numero }}</a>
+                    {{ horaire.equipe.titreProjet }}
+
+                    {% for key,mem in memoires %}
+                        {% if key == numero %}
+                            {% if mem!=null %}
+                                {% if mem.publie==false %}
+                                    <a href="{{ asset('odpf/odpf-archives/'~horaire.equipe.edition.ed~'/fichiers/memoires/prive/'~ mem.fichier) }}"
+                                       class="fas fa-book-reader"
+                                       title="Accéder au mémoire de l'équipe" target="_blank"> </a>
+                                {% endif %}
+                                {% if mem.publie==true %}
+                                    <a href="{{ asset('odpf/odpf-archives/'~horaire.equipe.edition.ed~'/fichiers/memoires/public/'~ mem.fichier) }}"
+                                       class="fas fa-book-reader"
+                                       title="Accéder au mémoire de l'équipe" target="_blank"> </a>
+                                {% endif %}
                             {% endif %}
                         {% endif %}
-                    {% endif %}
-                {% endfor %}
-                <a href="{{ path('fichiers_afficher_liste_fichiers_prof', {'infos': equipes.id~'-interacadémique-'~app.user.centrecia} ) }}"
-                   class="fas fa-info-circle"
-                   title="En savoir plus sur cette équipe"> </a>
-
-                {% if horaires!=null %}
-                    {% for horaire in horaires %}
-                        {% if horaire.equipe==equipes %}
-                            {% if horaire.horaire!= null %}
-                                 Heure de passage : {{ horaire.horaire|date('H:i') }},
-                            {% endif %}
-
-                            salle :{{ horaire.salle }}
-                        {% endif %}
-
-
                     {% endfor %}
-                {% endif %}
-            </p>
-        {% endif %}
-    {% endfor %}
+                    <a href="{{ path('fichiers_afficher_liste_fichiers_prof', {'infos': horaire.equipe.id~'-interacadémique-'~app.user.centrecia} ) }}"
+                       class="fas fa-info-circle"
+                       title="En savoir plus sur cette équipe"> </a> Heure de passage
+                    : {{ horaire.horaire|date('H:i') }},salle :{{ horaire.salle }}
+
+
+                </p>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        {% for equipes in listeEquipes %}
+
+            {% if equipes.numero in progression|keys and equipes.inscrite==true %}
+
+                {% set numero = equipes.numero %}
+                <p>
+                    <a
+                            {% if (progression[numero]) %}  class="btn btn-outline-primary btn-lg"
+                            {% else %}class ="btn btn-primary btn-lg"
+                            {% endif %}
+                            href="{{ path('cyberjuryCia_evaluer_une_equipe', {'id': equipes.id} ) }}">{{ equipes.numero }}</a>
+                    {{ equipes.titreProjet }}
+
+                    {% for key,mem in memoires %}
+                        {% if key == numero %}
+                            {% if mem!=null %}
+                                {% if mem.publie==false %}
+                                    <a href="{{ asset('odpf/odpf-archives/'~equipes.edition.ed~'/fichiers/memoires/prive/'~ mem.fichier) }}"
+                                       class="fas fa-book-reader"
+                                       title="Accéder au mémoire de l'équipe" target="_blank"> </a>
+                                {% endif %}
+                                {% if mem.publie==true %}
+                                    <a href="{{ asset('odpf/odpf-archives/'~equipes.edition.ed~'/fichiers/memoires/public/'~ mem.fichier) }}"
+                                       class="fas fa-book-reader"
+                                       title="Accéder au mémoire de l'équipe" target="_blank"> </a>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    <a href="{{ path('fichiers_afficher_liste_fichiers_prof', {'infos': equipes.id~'-interacadémique-'~app.user.centrecia} ) }}"
+                       class="fas fa-info-circle"
+                       title="En savoir plus sur cette équipe"> </a>
+
+                    {% if horaires!=null %}
+                        {% for horaire in horaires %}
+                            {% if horaire.equipe==equipes %}
+                                {% if horaire.horaire!= null %}
+                                    Heure de passage : {{ horaire.horaire|date('H:i') }},
+                                {% endif %}
+                                salle :{{ horaire.salle }}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </p>
+            {% endif %}
+        {% endfor %}
+
+    {% endif %}
+
+    {%  if app.session.get('info')!=null %}
+        {{ include('modales/modale_info.html.twig') }}
+        {{ app.session.set('info',null) }}
+    {% endif %}
 
 {% endblock %}

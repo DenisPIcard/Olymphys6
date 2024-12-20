@@ -102,11 +102,21 @@ class SecretariatjuryCiaController extends AbstractController
             ->andWhere('e.edition =:edition')
             ->andWhere('e.numero <:numero')
             ->andWhere('e.centre =:centre')
-            ->andWhere('e.inscrite !=0')
+            ->andWhere('e.inscrite = 1')
             ->setParameters(['edition' => $edition, 'numero' => 100, 'centre' => $centre])//les numéros supérieurs à 100 sont réservés aux "équipes" kurynational, ambiance du concours, remise des prix pour les photos
             ->orderBy('e.numero', 'ASC')
             ->getQuery()
             ->getResult();
+        $horaires = $this->doctrine->getRepository(HorairesSallesCia::class)->createQueryBuilder('h')
+            ->leftJoin('h.equipe', 'eq')
+            ->where('eq.centre =:centre')
+            ->andWhere('eq.edition =:edition')
+            ->andWhere('eq.inscrite = 1')
+            ->orderBy('h.horaire', 'ASC')
+            ->setParameters(['centre' => $centre, 'edition' => $this->requestStack->getSession()->get('edition')])
+            ->getQuery()->getResult();
+
+
         $lesEleves = [];
         $lycee = [];
 
@@ -121,7 +131,7 @@ class SecretariatjuryCiaController extends AbstractController
         $session = $this->requestStack->getSession();//on crèe une variable globale de session qui contient le tableau
         $session->set('tableau', $tableau);
         $content = $this->renderView('cyberjuryCia/accueil.html.twig',
-            array('centre' => $centre, 'equipes' => $listEquipes));
+            array('centre' => $centre, 'equipes' => $listEquipes, 'horaires' => $horaires));
 
         return new Response($content);
     }
@@ -189,20 +199,23 @@ class SecretariatjuryCiaController extends AbstractController
     {
 
         // affiche les équipes dans l'ordre de la note brute
-        $edition = $this->requestStack->getSession()->get('edition');
+        $editionId = $this->requestStack->getSession()->get('edition')->getId();
+        $edition = $this->doctrine->getManager()->getRepository(Edition::class)->findOneBy(['id' => $editionId]);
         $repositoryCentres = $this->doctrine->getRepository(Centrescia::class);
         $repositoryEquipes = $this->doctrine->getRepository(Equipesadmin::class);
         $repositoryRangs = $this->doctrine->getRepository(RangsCia::class);
         $centrecia = $repositoryCentres->findOneBy(['centre' => $centre]);
-        $listEquipes = $repositoryEquipes->findBy(['edition' => $edition, 'centre' => $centre]);
+        $listEquipes = $repositoryEquipes->findBy(['edition' => $edition, 'centre' => $centrecia, 'inscrite' => true]);
 
         $rangs = $repositoryRangs->createQueryBuilder('r')
             ->leftJoin('r.equipe', 'eq')
             ->where('eq.edition =:edition')
             ->andWhere('eq.centre =:centre')
-            ->setParameters(['edition' => $edition, 'centre' => $centrecia])
+            ->andWhere('eq.inscrite =:inscrite')
+            ->setParameters(['edition' => $edition, 'centre' => $centrecia, 'inscrite' => true])
             ->addOrderBy('r.rang', 'ASC')
             ->getQuery()->getResult();
+
         $content = $this->renderView('cyberjuryCia/classement.html.twig',
             array('rangs' => $rangs, 'equipes' => $listEquipes, 'centre' => $centrecia)
         );
@@ -437,27 +450,42 @@ class SecretariatjuryCiaController extends AbstractController
             $equipe = $this->doctrine->getRepository(Equipesadmin::class)->find($idequipe);
 
             if ($attrib == 'R') {
-                $jure->addEquipe($equipe);
+                $jure->addEquipe($equipe);//la fonction add contient le test d'existence de l'équipe dans la liste du juré
                 $rapporteur = $jure->getRapporteur();
-                if ($rapporteur == null) {
+                if ($rapporteur == []) {
                     $rapporteur[0] = $equipe->getNumero();
                     $jure->setRapporteur($rapporteur);
-                }
-                if (!in_array($equipe->getNumero(), $rapporteur)) {//le juré n'était pas rapporteur, il le devient
-                    $rapporteur[count($rapporteur)] = $equipe->getNumero();
+                } elseif (!in_array($equipe->getNumero(), $rapporteur)) {//le juré n'était pas rapporteur de cette équipe, il le devient
+                    $rapporteur[count($rapporteur)] = $equipe->getNumero();//on ajoute le numéro de l'équipe
                     $jure->setRapporteur($rapporteur);
+
+                }
+                $lecteur = $jure->getLecteur();//IL faut vérifier s'il n'était pas lecteur de cette équipe, sinon supprimer cette équipe des lecteurs
+
+                if (in_array($equipe->getNumero(), $lecteur)) {
+
+                    $key = array_keys($lecteur, $equipe->getNumero())[0];
+                    unset($lecteur[$key]);
+                    $jure->setLecteur($lecteur);
                 }
             }
             if ($attrib == 'L') {
                 $jure->addEquipe($equipe);
                 $lecteur = $jure->getLecteur();
-                if ($lecteur == null) {
+                if ($lecteur == []) {
                     $lecteur[0] = $equipe->getNumero();
                     $jure->setLecteur($lecteur);
-                }
-                if (!in_array($equipe->getNumero(), $lecteur)) {//le juré n'était pas lecteur , il le devient
+                } elseif (!in_array($equipe->getNumero(), $lecteur)) {//le juré n'était pas lecteur , il le devient
                     $lecteur[count($lecteur)] = $equipe->getNumero();
                     $jure->setLecteur($lecteur);
+
+                }
+                $rapporteur = $jure->getRapporteur();//IL faut vérifier s'il n'était pas rapporteur de cette équipe, sinon supprimer cette équipe des rapporteurs
+                if (in_array($equipe->getNumero(), $rapporteur)) {
+
+                    $key = array_keys($rapporteur, $equipe->getNumero())[0];
+                    unset($rapporteur[$key]);
+                    $jure->setRapporteur($rapporteur);
                 }
             }
             if ($attrib == 'E') {
@@ -465,13 +493,13 @@ class SecretariatjuryCiaController extends AbstractController
                 $jure->addEquipe($equipe);//la fonction add contient le test d'existence de l'équipe et ne l'ajoute que si elle n'est pas dans la liste des équipes du juré
                 $rapporteur = $jure->getRapporteur();
                 $lecteur = $jure->getLecteur();
-                if ($rapporteur !== null) {
+                if ($rapporteur !== []) {
                     if (in_array($equipe->getNumero(), $rapporteur)) {//On change l'attribution de l'équipe au juré : il n'est plus rapporteur
                         unset($rapporteur[array_search($equipe->getNumero(), $rapporteur)]);//supprime le numero de l'équipe dans la liste du champ rapporteur
                     }
                     $jure->setRapporteur($rapporteur);
                 }
-                if ($lecteur !== null) {
+                if ($lecteur !== []) {
                     if (in_array($equipe->getNumero(), $lecteur)) {//On change l'attribution de l'équipe au juré : il n'est plus lecteurr
                         unset($lecteur[array_search($equipe->getNumero(), $lecteur)]);//supprime le numero de l'équipe dans la liste du champ lecteur
                     }
@@ -943,6 +971,11 @@ class SecretariatjuryCiaController extends AbstractController
             $nom = $form->get('nomJure')->getData();
             $prenom = $form->get('prenomJure')->getData();
             $email = $form->get('email')->getData();
+            if ($this->doctrine->getRepository(User::class)->findOneBy(['email' => $email])) {//si oui, cela signifie qu'on utilise une adresse mail déjà existante : prévenir l'utilisateur
+                
+                $this->requestStack->getSession()->set('info', 'Cette adresse mail est déjà attribuée, impossible de changer');
+                return $this->redirectToRoute('secretariatjuryCia_gestionjures', ['centre' => $centre]);
+            }
             $userJure->setEmail($email);
             $userJure->setNom(strtoupper($nom));
             $prenomNorm = ucfirst(strtolower($prenom));

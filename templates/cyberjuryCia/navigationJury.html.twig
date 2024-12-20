@@ -1,4 +1,4 @@
-{% if "now"|date("m/d/Y") >= app.session.get('edition').concourscia|date("m/d/Y") %}
+{% if "now"|date("m/d/Y") >= app.session.get('edition').concourscia|date('-7days') %}
     <li class="nav-item dropdown menu_haut">
 
 

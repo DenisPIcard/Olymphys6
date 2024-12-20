@@ -67,9 +67,9 @@ function changeequipe(e, i, j) {
 
         },
 
-        error: function (data) {
-            alert("Error while submitting Data");
-        },
+        error: function (xhr, status, error) {
+            alert(xhr.responseText);
+        }
     });
 
 
@@ -81,6 +81,7 @@ function changeequipecia(e, i, j) {
     var id_jure = j;
     console.log(data_value);
     var formURL = document.getElementById('form-'.concat(id_jure))[0].action;
+
     console.log(formURL);
     $.ajax({
         url: formURL,
@@ -251,3 +252,9 @@ function modifordre(j) {//j est l'objet input qui a lancé la fonction, pour le 
 
 }
 
+function allcheck(check) {
+    var checkboxes = document.querySelectorAll('input[type=checkbox]')
+    for (var i in checkboxes) {
+        checkboxes[i].checked = check;
+    }
+}

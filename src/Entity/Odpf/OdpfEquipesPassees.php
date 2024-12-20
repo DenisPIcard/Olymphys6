@@ -65,6 +65,12 @@ class OdpfEquipesPassees
         return $Ed . '-' . $num . '-' . $this->getTitreProjet();
     }
 
+    public function __construct()
+    {
+
+        $this->autorisationsPhotos = false;
+    }
+
     public function getId(): ?int
     {
         return $this->id;

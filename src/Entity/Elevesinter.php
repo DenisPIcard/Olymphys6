@@ -99,6 +99,11 @@ class Elevesinter
 
         return $this;
     }
+    public function getEquipeNomPrenom(): string
+    {
+
+        return $this->equipe->getNumero() . '-' . $this->nom . ' ' . $this->prenom;
+    }
 
 
     public function getClasse(): ?string

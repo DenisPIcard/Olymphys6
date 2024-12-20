@@ -13,6 +13,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 
 class DocequipesCrudController extends AbstractCrudController
@@ -50,17 +51,18 @@ class DocequipesCrudController extends AbstractCrudController
         $fichierFile = VichFilesField::new('fichierFile')->setBasePath($this->params->get('app.path.docequipes.localhost'));
         $id = IntegerField::new('id', 'ID');
         $fichier = TextField::new('fichier')->setTemplatePath('bundles\\EasyAdminBundle\\liste_docequipes.html.twig');
+        $concours = ChoiceField::new('concours')->setChoices(['' => '', 'CIA' => 'CIA', 'CN' => 'CN']);
         $updatedAt = DateTimeField::new('updatedAt');
         $updatedat = DateTimeField::new('updatedAt', 'Mis à jour  le ');
 
         if (Crud::PAGE_INDEX === $pageName) {
-            return [$type, $titre, $description, $fichier, $updatedat];
+            return [$type, $titre, $description, $fichier, $concours, $updatedat];
         } elseif (Crud::PAGE_DETAIL === $pageName) {
-            return [$id, $fichier, $updatedAt, $type, $titre, $description];
+            return [$id, $fichier, $updatedAt, $type, $titre, $concours, $description];
         } elseif (Crud::PAGE_NEW === $pageName) {
-            return [$type, $titre, $description, $fichierFile];
+            return [$type, $titre, $description, $concours, $fichierFile];
         } elseif (Crud::PAGE_EDIT === $pageName) {
-            return [$type, $titre, $description, $fichierFile];
+            return [$type, $titre, $description, $concours, $fichierFile];
         }
     }
 

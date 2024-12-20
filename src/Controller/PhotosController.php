@@ -11,6 +11,7 @@ use App\Entity\Odpf\OdpfEquipesPassees;
 use App\Entity\Photos;
 use App\Form\ConfirmType;
 use App\Form\PhotosType;
+use App\Form\TelechargementPhotosType;
 use Imagick;
 use ImagickException;
 
@@ -23,16 +24,19 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 use Symfony\Component\Validator\Constraints\DateTime;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use ZipArchive;
 
 
 class PhotosController extends AbstractController
@@ -157,12 +161,15 @@ class PhotosController extends AbstractController
                         if ($concours == 'inter') {//Un membre du comité peut vouloir déposer une photo interacadémique lors du concours national
                             $photo->setNational(FALSE);
                         }
-                        if (($equipe->getLettre() !== null) or ($concours == 'cn')) {
+                        if (($equipe->getLettre() !== null) and ($concours == 'cn')) {
 
                             $photo->setNational(TRUE);
                         }
-                        if ($equipe->getNumero() >= 100) { //ces "équipes" sont des équipes technique remise des prix, ambiance du concours, etc, ...
+                        if ($equipe->getNumero() >= 100) { //ces "équipes" sont des équipes techniques remise des prix, ambiance du concours, etc, ...
                             $photo->setNational(TRUE);
+                        }
+                        if ($equipe->getNumero() >= 200) { //ces "équipes" sont des équipes techniques des CIA, ambiance du concours, etc, ...
+                            $photo->setNational(FALSE);
                         }
                         $photo->setPhotoFile($file);//Vichuploader gère l'enregistrement dans le bon dossier, le renommage du fichier
                         $photo->setEquipe($equipe);
@@ -235,10 +242,14 @@ class PhotosController extends AbstractController
 
     }
 
+    /**
+     * @throws \DateMalformedStringException
+     */
     #[Isgranted("ROLE_PROF")]
     #[Route("/photos/gestion_photos, {infos}", name: "photos_gestion_photos")]
     public function gestion_photos(Request $request, $infos)
     {
+        $slugger = new AsciiSlugger();
         $choix = explode('-', $infos)[3];
         $roles = $this->getUser()->getRoles();
 
@@ -266,20 +277,28 @@ class PhotosController extends AbstractController
         $editionN = $repositoryEdition->find(['id' => $concourseditioncentre[1]]);
         $editionN1 = $repositoryEdition->findOneBy(['ed' => $editionN->getEd() - 1]);
         new DateTime('now') >= $this->requestStack->getSession()->get('ouverturesite') ? $edition = $editionN : $edition = $editionN1;
-        if ($concours == 'inter') {
+        $datecia = $this->requestStack->getSession()->get('edition')->getConcoursCia()->format('Y-m-d');
+        $datelimite = date_modify(new \DateTime($datecia), '+30days');
+        if (new \DateTime('now') <= $datelimite) {//Dans la période de 30 jours qui suit le CIA , les profs peuvent gérer les photos des cia
+
+            $concours = 'inter';
+        }
+        if ($concours == 'inter' and (new \DateTime('now') <= $datelimite)) {
+
             $qb = $repositoryEquipesadmin->createQueryBuilder('e')
                 ->andWhere('e.edition =:edition')
                 ->setParameter('edition', $edition)
                 ->addOrderBy('e.numero', 'ASC');
-
-            $centre = $repositoryCentrescia->find(['id' => $concourseditioncentre[2]]);
-            if ($centre == null) {
-                $request->getSession()
-                    ->getFlashBag()
-                    ->add('info', 'Les centres interacadémiques ne sont pas encore attribués pour la ' . $edition->getEd() . 'e édition');
-                $this->redirectToRoute('core_home');
+            if (in_array('ROLE_COMITE', $user->getRoles())) {
+                $centre = $repositoryCentrescia->find(['id' => $concourseditioncentre[2]]);//pour les membres du comité
+                if ($centre == null) {
+                    $request->getSession()
+                        ->set('info', 'Les centres interacadémiques ne sont pas encore attribués pour la ' . $edition->getEd() . 'e édition');
+                    $this->redirectToRoute('core_home');
+                }
             }
             if ((in_array('ROLE_ORGACIA', $roles)) or (in_array('ROLE_SUPER_ADMIN', $roles)) or (in_array('ROLE_COMITE', $roles))) {
+                $centre = $repositoryCentrescia->find(['id' => $concourseditioncentre[2]]);//pour les organisateurs cia
                 $ville = $centre->getCentre();
                 $qb->andWhere('e.centre=:centre')
                     ->setParameter('centre', $centre);
@@ -346,88 +365,66 @@ class PhotosController extends AbstractController
             return $this->redirectToRoute('fichiers_choix_equipe', array('choix' => 'liste_prof'));
         }
 
-        $i = 0;
-        foreach ($liste_photos as $photo) {
-            $id = $photo->getId();
-            $form[$i] = $this->createForm(FormType::class, $photo);
-//if($photo->getComent()==null){$data=$photo->getEquipe()->getTitreProjet();}
-//else {$data=$photo->getComent();}
+        if ($request->get('enregistrer')) {
+            $em = $this->doctrine->getManager();
+            $photo = $repositoryPhotos->find(['id' => $request->get('id')]);
+            $photo->setComent($request->get('coment'));
+            $nlleEquipe = $em->getRepository(Equipesadmin::class)->find($request->get('equipe'));
+            $equipe = $photo->getEquipe();
+            if ($equipe != $nlleEquipe) {
+                $editionpassee = $this->doctrine->getRepository(OdpfEditionsPassees::class)->findOneBy(['edition' => $edition->getEd()]);
+                $nllequipepassee = $this->doctrine->getRepository(OdpfEquipesPassees::class)->findOneBy(['numero' => $nlleEquipe->getNumero(), 'editionspassees' => $editionpassee]);
 
-            $form[$i]->add('equipe', EntityType::class, [
-                'class' => Equipesadmin::class,
-                'choices' => $liste_equipes,
-            ])
-                ->add('id', HiddenType::class, ['disabled' => true, 'data' => $id, 'label' => false])
-                ->add('coment', TextType::class, [
-                    'required' => false,
-                ]);
-
-            if ($concours == 'inter') {
-                $form[$i]->add('equipe', EntityType::class, [
-                    'class' => Equipesadmin::class,
-                    'query_builder' => $qb,
-
-                    'choice_label' => 'getInfoequipe',
-                    'label' => 'Choisir une équipe',
-                    'mapped' => true,
-
-                ]);
-            }
-            $form[$i]->add('sauver', SubmitType::class)
-                ->add('effacer', SubmitType::class);
-
-
-            $form[$i]->handleRequest($request);
-            $formtab[$i] = $form[$i]->createView();
-
-            if ($form[$i]->isSubmitted() && $form[$i]->isValid()) {
-                $photo = $repositoryPhotos->find(['id' => $id]);
-
-                if ($form[$i]->get('sauver')->isClicked()) {
-
-                    $em = $this->doctrine->getManager();
-                    $photo->setComent($form[$i]->get('coment')->getData());
-                    if ($concours == 'cn') {
-                        $photo->setEquipe($form[$i]->get('equipe')->getData());
-                    }
-                    $em->persist($photo);
-                    $em->flush();
-
-                    return $this->redirectToRoute('photos_gestion_photos', array('infos' => $infos));
-
-
+                $photo->setEquipe($nlleEquipe);
+                $photo->setEquipepassee($nllequipepassee);
+                $nomPhoto = $photo->getPhoto();
+                $nomdecomp = explode('-', $nomPhoto);
+                $finNom = $nomdecomp[count($nomdecomp) - 1];
+                $numero = $nlleEquipe->getNumero();
+                if ($nlleEquipe->getLettre()) {
+                    $numero = $nlleEquipe->getNumero() . '-' . $nlleEquipe->getLettre();
                 }
-                if ($form[$i]->get('effacer')->isClicked()) {
-                    return $this->redirectToRoute('photos_confirme_efface_photo', array('concours_photoid_infos' => $concours . ':' . $photo->getId() . ':' . $infos));
-
-                }
+                $nouvNom = $edition->getEd() . '-' . $slugger->slug($nlleEquipe->getCentre())->toString() . '-eq' . $numero . '-' . $slugger->slug($nlleEquipe->getTitreProjet())->toString() . '-' . $finNom;
+                $pathnouvNom = 'odpf/odpf-archives/' . $edition->getEd() . '/photoseq/' . $edition->getEd() . '-' . $slugger->slug($nlleEquipe->getCentre())->toString() . '-eq' . $numero . '-' . $slugger->slug($nlleEquipe->getTitreProjet())->toString() . '-' . $finNom;
+                $pathnouvNomThumbs = 'odpf/odpf-archives/' . $edition->getEd() . '/photoseq/thumbs/' . $edition->getEd() . '-' . $slugger->slug($nlleEquipe->getCentre())->toString() . '-eq' . $numero . '-' . $slugger->slug($nlleEquipe->getTitreProjet())->toString() . '-' . $finNom;
+                rename('odpf/odpf-archives/' . $edition->getEd() . '/photoseq/' . $photo->getPhoto(), $pathnouvNom);
+                rename('odpf/odpf-archives/' . $edition->getEd() . '/photoseq/thumbs/' . $photo->getPhoto(), $pathnouvNomThumbs);
+                $photo->setPhoto($nouvNom);
 
             }
 
 
-            $i = $i + 1;
+            $em->persist($photo);
+            $em->flush();
+            return $this->redirectToRoute('photos_gestion_photos', array('infos' => $infos));
 
         }
-        if (!isset($formtab)) {
+        if ($request->get('supprimer')) {
+            $photo = $repositoryPhotos->find(['id' => $request->get('id')]);
+
+            return $this->redirectToRoute('photos_confirme_efface_photo', array('concours_photoid_infos' => $concours . ':' . $photo->getId() . ':' . $infos));
+        }
+        if ($liste_photos == []) {
             $request->getSession()->set('info', 'Vous n\'avez pas déposé de photo pour le concours ' . $concours . ' de l\'édition ' . $edition->getEd() . ' à ce jour');
             return $this->redirectToRoute('core_home');
 
 
         }
 
+
         if ($concours == 'inter') {
             $content = $this
-                ->renderView('photos/gestion_photos_cia.html.twig', array('formtab' => $formtab,
+                ->renderView('photos/gestion_photos_cia.html.twig', array(
                     'liste_photos' => $liste_photos, 'centre' => $ville, 'choix' => $choix,
-                    'edition' => $edition, 'liste_equipes' => $liste_equipes, 'concours' => 'cia'));
+                    'edition' => $edition, 'liste_equipes' => $liste_equipes, 'concours' => 'cia', 'infos' => $infos));
             return new Response($content);
         }
 
         if ($concours == 'cn') {
 
             $content = $this
-                ->renderView('photos/gestion_photos_cn.html.twig', array('formtab' => $formtab, 'liste_photos' => $liste_photos,
-                    'edition' => $edition, 'equipe' => $equipe, 'concours' => 'national', 'choix' => $choix));
+                ->renderView('photos/gestion_photos_cn.html.twig', array('liste_photos' => $liste_photos,
+                    'edition' => $edition, 'equipe' => $equipe, 'concours' => 'national', 'choix' => $choix, 'infos' => $infos));
             return new Response($content);
         }
 
@@ -479,6 +476,7 @@ class PhotosController extends AbstractController
     #[Route("/photos/voirgalerie {infos}", name: "photos_voir_galerie")]
     public function voirgalerie(Request $request, $infos)
     {
+
         $repositoryPhotos = $this->doctrine
             ->getManager()
             ->getRepository(Photos::class);
@@ -557,6 +555,107 @@ class PhotosController extends AbstractController
 
     }
 
+    #[IsGranted("ROLE_PROF")]
+    #[Route("/photos/telecharger_photos", name: "telecharger_photos")]
+    public function telechargerPhotos(Request $request): Response
+    {
+        $edition = $this->requestStack->getSession()->get('edition');
+        $slugger = new AsciiSlugger();
+        $user = $this->getUser();
+        $id_user = $user->getId();
+        $repositoryPhotos = $this->doctrine
+            ->getManager()
+            ->getRepository(Photos::class);
+        $listePhotos = null;
+
+        if (in_array('ROLE_ORGACIA', $user->getRoles())) {
+            $listePhotos = $repositoryPhotos->createQueryBuilder('p')
+                ->leftJoin('p.equipe', 'e')
+                ->where('e.centre=:centre')
+                ->andWhere('p.edition =:edition')
+                ->setParameter('centre', $user->getCentrecia())
+                ->setParameter('edition', $this->requestStack->getSession()->get('edition'))
+                ->orderBy('e.numero', 'ASC')
+                ->getQuery()->getResult();
+
+
+            $form = $this->createForm(TelechargementPhotosType::class, null, ['listePhotos' => $listePhotos]);
+            $form->handleRequest($request);
+            if (($form->isSubmitted() && $form->isValid()) or ($request->get('telecharger'))) {
+                $zipFile = new ZipArchive();
+                $now = new \DateTime('now');
+                $fileNameZip = $edition->getEd() . '-photos-' . $slugger->slug($user->getCentrecia())->toString() . '-' . $now->format('d-m-Y\-Hi-s') . '.zip';
+                if ($zipFile->open($fileNameZip, ZipArchive::CREATE) === TRUE) {
+                    foreach ($listePhotos as $photo) {
+                        if ($request->get('telecharger')) {
+                            $fileName = $this->getParameter('app.path.odpf_archives') . '/' . $photo->getEdition()->getEd() . '/photoseq/' . $photo->getPhoto();
+                            $zipFile->addFromString(basename($fileName), file_get_contents($fileName));
+                        } elseif ($form->get('check' . $photo->getId())->getData()) {
+                            $fileName = $this->getParameter('app.path.odpf_archives') . '/' . $photo->getEdition()->getEd() . '/photoseq/' . $photo->getPhoto();
+                            $zipFile->addFromString(basename($fileName), file_get_contents($fileName));
+
+                        }
+
+
+                    }
+                    $zipFile->close();
+                }
+                $response = new Response(file_get_contents($fileNameZip));//voir https://stackoverflow.com/questions/20268025/symfony2-create-and-download-zip-file
+
+                $disposition = HeaderUtils::makeDisposition(
+                    HeaderUtils::DISPOSITION_ATTACHMENT,
+                    $fileNameZip
+                );
+                $response->headers->set('Content-Type', 'application/zip');
+                $response->headers->set('Content-Disposition', $disposition);
+
+                @unlink($fileNameZip);
+                return $response;
+
+
+            }
+        }
+        if (in_array('ROLE_PROF', $user->getRoles())) {
+            $listePhotos = $repositoryPhotos->createQueryBuilder('p')
+                ->leftJoin('p.equipe', 'e')
+                ->andWhere('p.edition =:edition')
+                ->andWhere('e.idProf1=:prof1 or e.idProf2=:prof2')
+                ->setParameter('prof1', $id_user)
+                ->setParameter('prof2', $id_user)
+                ->setParameter('edition', $this->requestStack->getSession()->get('edition'))
+                ->getQuery()->getResult();
+
+            $zipFile = new ZipArchive();
+            $now = new \DateTime('now');
+            $fileNameZip = $edition->getEd() . '-photos-' . '-' . $now->format('d-m-Y\-Hi-s') . '.zip';
+            if ($zipFile->open($fileNameZip, ZipArchive::CREATE) === TRUE) {
+                foreach ($listePhotos as $photo) {
+
+                    $fileName = $this->getParameter('app.path.odpf_archives') . '/' . $photo->getEdition()->getEd() . '/photoseq/' . $photo->getPhoto();
+                    if (file_exists($fileName)) {
+
+                        $zipFile->addFromString(basename($fileName), file_get_contents($fileName));
+                    }
+                }
+                $zipFile->close();
+            }
+            $response = new Response(file_get_contents($fileNameZip));//voir https://stackoverflow.com/questions/20268025/symfony2-create-and-download-zip-file
+
+            $disposition = HeaderUtils::makeDisposition(
+                HeaderUtils::DISPOSITION_ATTACHMENT,
+                $fileNameZip
+            );
+            $response->headers->set('Content-Type', 'application/zip');
+            $response->headers->set('Content-Disposition', $disposition);
+
+            @unlink($fileNameZip);
+            return $response;
+
+
+        }
+
+        return $this->render('photos/telechargements_photos.html.twig', ['listePhotos' => $listePhotos, 'form' => $form->createView(), 'centre' => $user->getCentrecia()]);
+    }
 
 }
 

@@ -18,14 +18,46 @@
     <a href="{{ asset('odpf/odpf-documents/CyberjuryCia-Orga.pdf') }}" type="button" class="btn btn-warning" target="_blank">Aide du cyberjury</a>
 
     <hr>
-    {% for equipe in equipes %}
-        {% set infos =  equipe.id ~ '-'~'interacadémique'~'-'~'' %}
-        <p>
-            <a class="btn btn-primary btn-lg"
-               href="{{ path('fichiers_afficher_liste_fichiers_prof', {'infos': infos} ) }}">{{ equipe.numero }}</a>
-            {{ equipe.titreProjet }}
-        </p>
-    {% endfor %}
+    {% if horaires|length == equipes|length %}
+        <div>Dans l'ordre chronologique de passage des équipes</div>
+        {% for horaire in horaires %}
+            {% if  horaire.equipe.inscrite==true %}
+                {% set infos =  horaire.equipe.id ~ '-'~'interacadémique'~'-'~'' %}
+                {% set numero = horaire.equipe.numero %}
+                <p>
+                    <a class="btn btn-primary btn-lg"
+                       href="{{ path('fichiers_afficher_liste_fichiers_prof', { 'infos': infos } ) }}">{{ horaire.equipe.numero }}</a>
+                    {{ horaire.equipe.titreProjet }} - Heure de passage : {{ horaire.horaire|date('H:i') }},salle
+                    :{{ horaire.salle }}
+
+
+                </p>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        {% for equipe in equipes %}
+            {% if equipe.inscrite == true %}
+                {% set infos =  equipe.id ~ '-'~'interacadémique'~'-'~'' %}
+                <p>
+                    <a class="btn btn-primary btn-lg"
+                       href="{{ path('fichiers_afficher_liste_fichiers_prof', {'infos': infos} ) }}">{{ equipe.numero }}</a>
+                    {{ equipe.titreProjet }}
+                    {% set horairepassage=null %}
+                    {% set salleEquipe=null %}
+                    {% for horaire in horaires %}
+                        {% if horaire.equipe==equipe %}
+                            {% set horairepassage= horaire.horaire|date('H:i') %},{% set salleequipe= horaire.salle %}
+
+                        {% endif %}
+
+                    {% endfor %}
+                    - Heure de passage : {{ horairepassage }}, salle :{{ salleEquipe }}
+
+                </p>
+            {% endif %}
+        {% endfor %}
+
+    {% endif %}
 
 
 {% endblock %}

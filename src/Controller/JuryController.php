@@ -62,12 +62,17 @@ class JuryController extends AbstractController
 
     {
         $session = $this->requestStack->getSession();
-
         $edition = $session->get('edition');
+
         $editionN1 = $session->get('editionN1');
         $date = new \DateTime('now');
         if ($date < $edition->getDateOuvertureSite() and $date > $editionN1->getConcoursCn()) {//Dans le cas où l'édition N+1 a été créée il que les jurés puisse accéder aux équipes de l'édition N
             $edition = $editionN1;
+        }
+        if($_SERVER['SERVER_NAME'] == '127.0.0.1' and $date < $edition->getConcoursCn()) {//pour tester le site avant le concours avec les données de l'édition précédente
+
+            $edition = $editionN1;
+
         }
 
         $repositoryJures = $this->doctrine
@@ -83,8 +88,7 @@ class JuryController extends AbstractController
 
         $id_jure = $jure->getId();
 
-        $attrib = $repositoryJures->getAttribution($jure);
-
+        $attrib = $repositoryJures->getAttribution($jure);;
         $repositoryEquipes = $this->doctrine
             ->getManager()
             ->getRepository(Equipes::class);
@@ -106,7 +110,7 @@ class JuryController extends AbstractController
             foreach ($attrib as $key => $value) {
 
                 if ($equipe->getEquipeinter()->getLettre() == $key) {
-
+                    dump($key);
                     $id = $equipe->getId();
                     $note = $repositoryNotes->EquipeDejaNotee($id_jure, $id);
                     $progression[$key] = (!is_null($note)) ? 1 : 0;
@@ -119,7 +123,10 @@ class JuryController extends AbstractController
                             ->andWhere('m.equipe =:equipe')
                             ->setParameter('equipe', $equipe->getEquipeinter())
                             ->getQuery()->getSingleResult();
+
+
                     } catch (Exception $e) {
+
                         $memoires[$key] = null;
                     }
                 }

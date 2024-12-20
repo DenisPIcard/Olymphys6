@@ -74,7 +74,7 @@ class CoreController extends AbstractController
         $tab['listfaq'] = $listfaq;
         // ajoute la liste de la Foire aux questions
         // le tout est transmis au template
-        if ($_SERVER['SERVER_NAME'] == 'olympessais.olymphys.fr') {
+        if ($_SERVER['SERVER_NAME'] == 'www.olympessais.olymphys.fr') {
             $this->requestStack->getSession()->set('info', 'Vous êtes sur le site d\'essais d\'olymphys, utilisé pour le 
             développement du site, mais dont le contenu n\'est pas à jour.
             Il faut se connecter sur  olymphys.fr pour réaliser des actions pérennes ');

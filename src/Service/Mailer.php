@@ -75,24 +75,28 @@ class Mailer
      * @throws TransportExceptionInterface
      */
     public function sendConfirmFile(Equipesadmin $equipe, $type_fichier, $user,$fichier): Email
-    {    //dd($fichier);
+    {
         $email = (new TemplatedEmail())
             ->from('info@olymphys.fr')
             ->to('webmestre2@olymphys.fr')
-            ->addCc('webmestre3@olymphys.fr, webmestre4@olymphys.fr,'.$user->getEmail());//'webmestre2@olymphys.fr', 'Denis'
+            ->addCc('webmestre3@olymphys.fr')
+            ->addCc('webmestre4@olymphys.fr')
+            ->addCc($user->getEmail());//'webmestre2@olymphys.fr', 'Denis'*/
 
         if ($type_fichier == 'fiche securité(présentation)' or $type_fichier == 'fiche securité(exposition)') {
 
             $email->addCc('lahmidani.fouad@free.fr', 'pascale.rv@gmail.com', 'claire.chalnot@gmail.com')
             ->attachFromPath('odpf/odpf-archives/'.$this->requestStack->getSession()->get('edition')->getEd().'/fichiers/fichessecur/'.$fichier->getFichier());
+
         }
-        $equipe->getSelectionnee() == true ? $infoequipe = $equipe->getInfoequipe() : $infoequipe = $equipe->getInfoequipenat();
+        $equipe->getSelectionnee() != true ? $infoequipe = $equipe->getInfoequipe() : $infoequipe = $equipe->getInfoequipenat();
         $email->htmlTemplate('email/confirm_fichier.html.twig')
             ->subject('Depot du fichier ' . $type_fichier . ' de l\'équipe ' . $infoequipe)
             //->text('L\'equipe ' . $equipe->getInfoequipe() . ' a déposé un fichier : ' . $type_fichier)
             ->context(['equipe' => $equipe, 'typeFichier' => $type_fichier, 'userNom' => $user->getPrenomNom(), 'user_email'=>$user->getEmail()]);
 
         $this->mailer->send($email);
+
         return $email;
 
     }
@@ -127,10 +131,10 @@ class Mailer
         if (!$modif) {
             $email = (new TemplatedEmail())
                 ->from('info@olymphys.fr')
-                ->addBCc('webmestre2@olymphys.fr') //'webmestre2@olymphys.fr', 'Denis'
+                ->addCc('webmestre2@olymphys.fr') //'webmestre2@olymphys.fr', 'Denis'
                 ->addTo($user->getEmail())
-                ->addBCc('webmestre3@olymphys.fr')
-                ->addBCc('webmestre4@olymphys.fr')
+                ->addCc('webmestre3@olymphys.fr')
+                ->addCc('webmestre4@olymphys.fr')
                 ->addCc('emma.gosse@orange.fr')
                 ->htmlTemplate('email/confirme_inscription.html.twig')
                 ->subject('Inscription de l\'équipe  ' . $equipe->getNumero() . ' par ' . $user->getPrenomNom())
@@ -150,12 +154,12 @@ class Mailer
                     if ($checkChange['inscrite'] == 'NON') {
                         $changetext = '<h1>Désinscription de l\'équipe !</h1><br>';
                         $checkChange['inscrite'] = $equipe->getIdProf1()->getPrenomNom() . '(<a href="' . $user->getEmail() . '">' . $user->getEmail() .
-                            '</a>) du lycée ' . $equipe->getNomLycee() . ' de ' . $equipe->getLyceeLocalite() . ' a désinscrit l\'équipe denommée : ' . $equipe->getTitreProjet();
+                            '</a>) du lycée ' . $equipe->getNomLycee() . ' de ' . $equipe->getLyceeLocalite() . ' a désinscrit l\'équipe '.$equipe->getNumero().' denommée : ' . $equipe->getTitreProjet();
                     }
                     if ($checkChange['inscrite'] == 'OUI') {
                         $changetext = '<h1>Réinscription de l\'équipe !</h1><br>';
                         $checkChange['inscrite'] = $equipe->getIdProf1()->getPrenomNom() . '(<a href="' . $user->getEmail() . '">' . $user->getEmail() .
-                            '</a>) du lycée ' . $equipe->getNomLycee() . ' de ' . $equipe->getLyceeLocalite() . ' a réinscrit l\'équipe denommée : ' . $equipe->getTitreProjet();
+                            '</a>) du lycée ' . $equipe->getNomLycee() . ' de ' . $equipe->getLyceeLocalite() . ' a réinscrit l\'équipe '.$equipe->getNumero().' denommée : ' . $equipe->getTitreProjet();
 
                     }
 

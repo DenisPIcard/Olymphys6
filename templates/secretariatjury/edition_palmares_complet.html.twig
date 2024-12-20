@@ -30,9 +30,9 @@
                         <td> Lycée {{ lycee.nom |upper }} - {{ lycee.commune |upper }} </td>
                     {% endfor %}
                     <td>
-                        {% for prof in prof1[lettre] %}
-                            {{ prof.prenom|title }} {{ prof.nom|upper }}
-                        {% endfor %}
+
+                            {{ prof1[lettre]}}
+
                     </td>
                     <td
                             {% if equipe.classement == '1er' %} class="danger"
@@ -46,20 +46,19 @@
                             {% if equipe.classement == '1er' %} class="danger"
                             {% elseif  equipe.classement == '2ème' %} class="warning"
                             {% else %} class="active" {% endif %} >
-                        {% if  equipe.phrases[0] is not  defined %}
+                        {% if  equipe.phrases is not  defined %}
 
                         {% else %}
+                            <p style="color:blue">{{ phrases[lettre] }}</p>
 
-                        <p style="color:blue">{{ equipe.phrases[0].phrase }} {{ equipe.phrases[0].liaison.liaison }} {{ equipe.phrases[0].prix }}</p>
                     </td>
                     {% endif %}
                 </tr>
                 <tr>
                     <td rowspan="2"><p style="color:red">{{ lettre }} - {{ equipe.equipeinter.titreProjet }} </p></td>
                     <td>
-                        {% for prof in prof2[lettre] %}
-                            {{ prof.prenom|title }} {{ prof.nom|upper }}
-                        {% endfor %}
+
+                            {{ prof2[lettre] }}
                     </td>
 
                     <td>

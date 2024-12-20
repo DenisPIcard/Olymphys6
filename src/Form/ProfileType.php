@@ -5,6 +5,7 @@ namespace App\Form;
 
 use App\Entity\User;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -20,6 +21,7 @@ class ProfileType extends AbstractType
             ->add('nom', TextType::class, ['required' => true, 'label' => 'Votre nom'])
             ->add('prenom', TextType::class, ['required' => true, 'label' => 'Votre prénom'])
             ->add('adresse', TextType::class, ['required' => true, 'label' => 'Votre adresse (numéro +rue)'])
+            ->add('email', EmailType::class, ['required' => true, 'label' => 'Votre email et identifiant'])
             ->add('ville', TextType::class, ['required' => true, 'label' => 'Votre ville'])
             ->add('code', TextType::class, ['required' => true, 'label' => 'Votre code'])
             ->add('phone', TextType::class, ['required' => true, 'label' => 'Votre téléphone, portable, si possible',])

@@ -58,18 +58,24 @@ class JuryCiaController extends AbstractController
             ->getManager()
             ->getRepository(JuresCia::class);
         $user = $this->getUser();
-        $jure = $repositoryJures->findOneBy(['iduser' => $user]);
 
+        $jure = $repositoryJures->findOneBy(['iduser' => $user]);
         if ($jure === null) {
             $request->getSession()->set('info', 'Vous avez été déconnecté');
             return $this->redirectToRoute('core_home');
         }
-
-
         $id_jure = $jure->getId();
+        $listeequipesjure = $jure->getEquipes();
+        $equipesjure = null;
+        $e = 0;
+        foreach ($listeequipesjure as $equipe) {//afin que si l'équipe abandonne après l'affectation du juré, elle n'apparaisse pas dans la liste des équipes du juré
+            if ($equipe->getInscrite() == true) {
+                $equipesjure[$e] = $equipe;
+                $e++;
+            }
 
-        $equipes = $jure->getEquipes();
 
+        }
         $repositoryEquipes = $this->doctrine
             ->getManager()
             ->getRepository(Equipesadmin::class);
@@ -87,23 +93,26 @@ class JuryCiaController extends AbstractController
             ->where('e.edition =:edition')
             ->setParameter('edition', $edition)
             ->andWhere('e.centre =:centre')
+            ->andWhere('e.inscrite =:inscrite')
             ->setParameter('centre', $this->getUser()->getCentrecia())
+            ->setParameter('inscrite', '1')
             ->addOrderBy('e.numero', 'ASC')
             ->getQuery()->getResult();
-
         $horaires = $this->doctrine->getRepository(HorairesSallesCia::class)->createQueryBuilder('h')
             ->leftJoin('h.equipe', 'eq')
             ->where('eq.centre =:centre')
             ->andWhere('eq.edition =:edition')
-            ->setParameters(['centre' => $jure->getCentrecia(), 'edition' => $this->requestStack->getSession()->get('edition')])
+            ->andWhere('eq.id IN (:equipes)')
+            ->orderBy('h.horaire', 'ASC')
+            ->setParameters(['centre' => $jure->getCentrecia(), 'edition' => $this->requestStack->getSession()->get('edition'), 'equipes' => $equipesjure])
             ->getQuery()->getResult();
 
         foreach ($listeEquipes as $equipe) {
 
-            foreach ($equipes as $equipejure) {
-
+            foreach ($equipesjure as $equipejure) {
                 if ($equipejure == $equipe) {
                     $key = $equipe->getNumero();
+
                     $id = $equipe->getId();
                     $note = $repositoryNotes->EquipeDejaNotee($id_jure, $id);
                     $progression[$key] = (!is_null($note)) ? 1 : 0;
@@ -123,9 +132,10 @@ class JuryCiaController extends AbstractController
             }
         }
 
+
         $content = $this->renderView('cyberjuryCia/accueil_jury.html.twig',
             array(
-                'listeEquipes' => $listeEquipes,
+                'listeEquipes' => $equipesjure,
                 'progression' => $progression,
                 'jure' => $jure,
                 'memoires' => $memoires,
@@ -223,10 +233,13 @@ class JuryCiaController extends AbstractController
     #[Route("/evaluer_une_equipe_cia/{id}", name: "cyberjuryCia_evaluer_une_equipe", requirements: ["id_equipe" => "\d{1}|\d{2}"])]
     public function evaluer_une_equipe_cia(Request $request, $id): RedirectResponse|Response
     {
-
-        if (new DateTime('now') >= $this->requestStack->getSession()->get('edition')->getConcourscia()) {
+        $dateconcourscia=$this->requestStack->getSession()->get('edition')->getConcourscia()->format('Y-m-d');
+        $datelim=new \DateTime($dateconcourscia);
+        $datelim = $datelim->modify('-7 day');
+        if (new DateTime('now') >= $datelim) {
             $user = $this->getUser();
             $jure = $this->doctrine->getRepository(JuresCia::class)->findOneBy(['iduser' => $user]);
+
             if ($jure->getCentrecia()->getVerouClassement() != true) {
                 $repositoryNotes = $this->doctrine
                     ->getManager()
@@ -311,8 +324,8 @@ class JuryCiaController extends AbstractController
 
 
                 $coefficients = $this->doctrine->getRepository(Coefficients::class)->findOneBy(['id' => 1]);
-
-                if ($request->isMethod('POST') && $form->handleRequest($request)->isValid()) {
+                $form->handleRequest($request);
+                if ($form->isSubmitted() and $form->isValid()) {
 
                     $coefficients = $this->doctrine->getRepository(Coefficients::class)->findOneBy(['id' => 1]);
                     $notes->setCoefficients($coefficients);
@@ -325,6 +338,7 @@ class JuryCiaController extends AbstractController
                             ->getQuery()->getResult();
 
                     }
+
                     $em->persist($notes);
                     $em->flush();
                     $repo = $this->doctrine->getRepository(RangsCia::class);
@@ -343,17 +357,18 @@ class JuryCiaController extends AbstractController
                         'progression' => $progression,
                         'jure' => $jure,
                         'coefficients' => $coefficients,
-                        'memoire' => $memoire
+                        'memoire' => $memoire,
+                        'datelim' => $datelim
                     ));
                 return new Response($content);
             } else {
 
                 $this->requestStack->getSession()->set('info', 'Le classement est à présent verouillé. Evaluation impossible');
-                return $this->redirectToRoute('secretariatjuryCia_classement', ['centre' => $jure->getCentrecia()->getCentre()]);
+                return $this->redirectToRoute('secretariatjuryCia_classement', ['centre' => $jure->getCentrecia()->getCentre(), 'datelim' => $datelim]);
             }
         } else {
             $this->requestStack->getSession()->set('info', 'L\'évaluation des équipes n\'est pas encore ouverte');
-            return $this->redirectToRoute('core_home');
+            return $this->redirectToRoute('cyberjuryCia_accueil');
         }
     }
 
@@ -511,7 +526,7 @@ class JuryCiaController extends AbstractController
         $edition = $this->requestStack->getSession()->get('edition');
         $centre = $this->doctrine->getRepository(Centrescia::class)->findOneBy(['centre' => $centre]);
         $repositoryEquipes = $this->doctrine->getRepository(Equipesadmin::class);
-        $equipes = $repositoryEquipes->findBy(['centre' => $centre, 'edition' => $edition]);
+        $equipes = $repositoryEquipes->findBy(['centre' => $centre, 'edition' => $edition, 'inscrite' => true]);
         $repositoryConseils = $this->doctrine->getRepository(ConseilsjuryCia::class);
         $conseils = $repositoryConseils->createQueryBuilder('c')
             ->select()

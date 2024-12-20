@@ -40,15 +40,15 @@ class NotesCia
     #[ORM\ManyToOne(targetEntity: Equipesadmin::class, inversedBy: "notess")]
     private ?Equipesadmin $equipe;
 
-    #[ORM\ManyToOne(targetEntity: JuresCia::class, inversedBy: "notesj")]
-    private ?JuresCia $jure;
-
 
     #[ORM\Column(type: Types::INTEGER)]
     private ?int $total = 0;
 
-    #[ORM\ManyToOne(targetEntity: Coefficients::class, )]
+    #[ORM\ManyToOne(targetEntity: Coefficients::class)]
     private ?Coefficients $coefficients;
+
+    #[ORM\ManyToOne(inversedBy: 'notesj')]
+    private ?JuresCia $jure = null;
 
     const NE_PAS_NOTER = 0; // pour les écrits....
     const INSUFFISANT = 1;
@@ -182,17 +182,6 @@ class NotesCia
         return $this->equipe;
     }
 
-    public function setJure(JuresCia $jure): ?NotesCia
-    {
-        $this->jure = $jure;
-
-        return $this;
-    }
-
-    public function getJure(): ?JuresCia
-    {
-        return $this->jure;
-    }
 
 
     public function getTotal(): ?int
@@ -207,20 +196,28 @@ class NotesCia
         return $this;
     }
 
-    public function getCoefficients(): ?coefficients
+    public function getCoefficients(): ?Coefficients
     {
         return $this->coefficients;
     }
 
-    public function setCoefficients(?coefficients $coefficients): self
+    public function setCoefficients(?Coefficients $coefficients): self
     {
         $this->coefficients = $coefficients;
 
         return $this;
     }
 
-    public function setJureCia(JuresCia $param)
+    public function getJure(): ?JuresCia
     {
+        return $this->jure;
+    }
+
+    public function setJure(?JuresCia $jure): static
+    {
+        $this->jure = $jure;
+
+        return $this;
     }
 
 

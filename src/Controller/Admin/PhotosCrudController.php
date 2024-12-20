@@ -351,8 +351,16 @@ class PhotosCrudController extends AbstractCrudController
             ->leftJoin('p.editionspassees', 'ed')
             ->andWhere('ed.edition =:edition')
             ->setParameters(['numero' => $entityInstance->getEquipe()->getNumero(), 'edition' => $edition->getEd()])
-            ->getQuery()->getSingleResult();
-
+            ->getQuery()->getOneOrNullResult();
+        if ($equipepassee === null) {
+            $equipepassee = new OdpfEquipesPassees();
+            $equipepassee->setNumero($entityInstance->getEquipe()->getNumero());
+            $equipepassee->setEditionspassees($editionpassee);
+            $equipepassee->setTitreprojet($entityInstance->getEquipe()->getTitreProjet());
+            $equipepassee->setSelectionnee(false);
+            $this->doctrine->getManager()->persist($equipepassee);
+            $this->doctrine->getManager()->flush();
+        }
         $entityInstance->setEdition($edition);
         $entityInstance->setEditionspassees($editionpassee);
         $entityInstance->setEquipepassee($equipepassee);
@@ -464,11 +472,13 @@ class PhotosCrudController extends AbstractCrudController
 
         if ($entityInstance->getPhotoFile() === null) //on veut modifier l'équipe attribuée à la photo sans modifier la photo
 
-        {  //Il faut donc modifier le nom de la  photos déposée et de sa vignette "à la main"
+        {  //Il faut donc modifier le nom de la  photos déposée et de sa vignette "à la main" sans vichuploader
             $equipe = $entityInstance->getEquipe();
             $name = $entityInstance->getPhoto();
             $parseOldName = explode('-', $name);
-            $endName = end($parseOldName);
+
+            $endName = $parseOldName[count($parseOldName) - 1];
+
             $slugger = new AsciiSlugger();
             $ed = $entityInstance->getEditionspassees()->getEdition();
             $equipepassee = $entityInstance->getEquipepassee();
@@ -485,11 +495,13 @@ class PhotosCrudController extends AbstractCrudController
                 );
 
             }
+
             $numero_equipe = $equipepassee->getNumero();
             $nom_equipe = $equipepassee->getTitreProjet();
             $nom_equipe = $slugger->slug($nom_equipe)->toString();
             if ($entityInstance->getNational() == FALSE) {
-                $newFileName = $slugger->slug($ed . '-' . $centre . '-' . $numero_equipe . '-' . $nom_equipe . '.' . $endName);
+                $newFileName = $ed . '-' . $slugger->slug($centre)->toString() . '-' . $numero_equipe . '-' . $nom_equipe . '.' . $endName;
+
             }
             if ($entityInstance->getNational() == TRUE) {
                 $equipepassee->getLettre() === null ? $idEquipe = $equipepassee->getNumero() : $idEquipe = $equipepassee->getLettre();
@@ -501,6 +513,7 @@ class PhotosCrudController extends AbstractCrudController
             $newPathName = 'odpf/odpf-archives/' . $entityInstance->getEditionsPassees()->getEdition() . '/photoseq/' . $newFileName;
             $oldPathNameThumb = 'odpf/odpf-archives/' . $entityInstance->getEditionsPassees()->getEdition() . '/photoseq/thumbs/' . $name;
             $newPathNameThumb = 'odpf/odpf-archives/' . $entityInstance->getEditionsPassees()->getEdition() . '/photoseq/thumbs/' . $newFileName;
+
             if (file_exists($oldPathName)) {
                 rename($oldPathName, $newPathName);
             }

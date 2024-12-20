@@ -63,6 +63,7 @@
 
 
             {% for equipe in liste_equipes %}
+                {% if equipe.uaiId!=null %} {# n'affiche pas les équipes techniques jury, ambiance, etc #}
                 <div class="row">
                     <div class="col">
                         <b>{{ equipe.numero }}</b> - {{ equipe.titreProjet }}
@@ -88,6 +89,7 @@
 
                 </div>
                 <hr>
+                {% endif %}
             {% endfor %}
 
         {% endif %}
@@ -190,7 +192,7 @@
             </table>
         </div>
         {% if doc_equipes!=null %}
-            <div class="container-fluid">
+            <div class="container-fluid" style="text-align: center;">
                 <h3 style="text-align:center">
                     Documents à télécharger
                 </h3>
@@ -205,6 +207,7 @@
                     </thead>
                     <tbody>
                     {% for fichier in doc_equipes %}
+                        {% if (fichier.concours!='CN' and phase=='interacadémique') or (fichier.concours!='CIA' and phase=='national') %}
                         <tr>
                             <td>{% if fichier.type=='pdf' %} <img src="{{ asset('images/pdf_icon.png') }}" width="50px"
                                                                   alt="pdf">
@@ -224,6 +227,7 @@
                                     <button type="button" title="Télécharger"><i class="fas fa-download"></i></button>
                                 </a></td>
                         </tr>
+                        {% endif %}
                     {% endfor %}
                     </tbody>
                 </table>

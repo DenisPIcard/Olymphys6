@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\NotesRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Console\Question\Question;
 
 #[ORM\Entity(repositoryClass: NotesRepository::class)]
 class Notes
@@ -44,8 +45,7 @@ class Notes
     #[ORM\Column(type: Types::INTEGER)]
     private ?int $total = 0;
 
-    #[ORM\ManyToOne]
-    #[ORM\Column(name:'coefficients_id', nullable: true)]
+    #[ORM\ManyToOne(targetEntity: Coefficients::class)]
     private ?Coefficients $coefficients;
 
 

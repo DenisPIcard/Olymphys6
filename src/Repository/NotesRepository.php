@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Entity\Coefficients;
 use App\Entity\Notes;
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\NonUniqueResultException;
 
 /**
  * @method Notes|null find($id, $lockMode = null, $lockVersion = null)
@@ -44,6 +45,9 @@ class NotesRepository extends EntityRepository
         return $rangs;
     }
 
+    /**
+     * @throws NonUniqueResultException
+     */
     public function EquipeDejaNotee($jure_id, $equipe_id)//donne la note si l'équipe a déjà une note de ce juré
     {
         $queryBuilder = $this->createQueryBuilder('n');  // n est un alias, un raccourci donné à l'entité du repository. 1ère lettre du nom de l'entité

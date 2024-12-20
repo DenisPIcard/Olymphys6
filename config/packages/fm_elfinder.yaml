@@ -1,5 +1,5 @@
 fm_elfinder:
-  assets_path: /
+  assets_path: /assets
   instances:
     default:
       locale: fr # Langue
@@ -11,19 +11,6 @@ fm_elfinder:
       where_is_multi:
         roots: 0
       multi_home_folder: true
-
-
-
-
-
-
-
-
-
-
-
-
-
       folder_separator: "|"
       connector:
         debug: false # Désactive le debug

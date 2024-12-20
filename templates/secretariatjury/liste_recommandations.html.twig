@@ -4,7 +4,7 @@
 
 
 {% block navigation %}
-    {% if is_granted('ROLE_SUPER_ADMIN') %}
+    {% if is_granted('ROLE_SECRETARIAT_JURY') %}
         {{ include ('secretariatjury/navigation.html.twig') }}
 
     {% endif %}
