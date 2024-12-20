@@ -248,3 +248,9 @@ function modifordre(j) {//j est l'objet input qui a lancé la fonction, pour le 
 
 }
 
+function allcheck(check) {
+    var checkboxes = document.querySelectorAll('input[type=checkbox]')
+    for (var i in checkboxes) {
+        checkboxes[i].checked = check;
+    }
+}

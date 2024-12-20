@@ -16,26 +16,24 @@
 {% endblock %}
 
 {% block body %}
-    {% for message in app.session.flashbag.get('info') %}
-        <div class="alert alert-danger" role="alert"> {{ message }}</div>
-    {% endfor %}
+    <div class="container" style="text-align: center">
+        {% for message in app.session.flashbag.get('info') %}
+            <div class="alert alert-danger" role="alert"> {{ message }}</div>
+        {% endfor %}
 
-    <img src="{{ asset('/upload/photos/thumbs/'~photo.photo) }}">
+        <img src="{{ asset('odpf/odpf-archives/'~ photo.editionspassees.edition~'/photoseq/thumbs/'~photo.photo) }}">
 
-    {{ form_start(form) }}
+        {{ form_start(form) }}
 
-    <div class="form-group row">
-        <div class="coll">
-            {{ form_row(form.OUI) }}
+        <div class="form-group row">
+            <div class="col" style="text-align: center ">
+                {{ form_widget(form.OUI) }}
+                {{ form_widget(form.NON) }}
+            </div>
         </div>
+        {{ form_end(form) }}
 
-        <div class="coll-10">
-            {{ form_row(form.NON) }}
-        </div>
     </div>
-    {{ form_end(form) }}
-
-
     {#
     <div class="row">
         <div class="col-sm-10" >form_row(form.OUI)</div>

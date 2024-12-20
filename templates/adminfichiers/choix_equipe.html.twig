@@ -63,6 +63,7 @@
 
 
             {% for equipe in liste_equipes %}
+                {% if equipe.uaiId!=null %} {# n'affiche pas les équipes techniques jury, ambiance, etc #}
                 <div class="row">
                     <div class="col">
                         <b>{{ equipe.numero }}</b> - {{ equipe.titreProjet }}
@@ -88,6 +89,7 @@
 
                 </div>
                 <hr>
+                {% endif %}
             {% endfor %}
 
         {% endif %}

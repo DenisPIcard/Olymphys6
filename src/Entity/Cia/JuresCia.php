@@ -45,7 +45,7 @@ class JuresCia
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $email = null;
 
-    #[ORM\Column(type: Types::JSON, nullable: true)]//Tableau contenant l'Id des  équipes pour lesquelles le jurés est rapporteur
+    #[ORM\Column(type: Types::JSON, nullable: true)]//Tableau contenant le n° des  équipes pour lesquelles le jurés est rapporteur
     private ?array $rapporteur = [];
 
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]

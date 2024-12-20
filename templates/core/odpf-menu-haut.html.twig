@@ -189,6 +189,8 @@
                            aria-pressed="true">Les équipes et leurs documents</a>
                         <a class="dropdown-item login py-0" href="{{ path('photos_deposephotos', {concours:'inter'}) }}"
                            role="button" aria-pressed="true">Déposer des photos des interacadémiques</a>
+                        <a class="dropdown-item login py-0" href="{{ path('telecharger_photos') }}"
+                           role="button" aria-pressed="true">Les photos du cia de {{ app.user.centrecia.centre }}</a>
                         <a class="dropdown-item login py-0"
                            href="{{ path('secretariatjuryCia_accueil',{'centre':app.user.centrecia}) }}"
                            role="button" aria-pressed="true">Gestion du jury du cia</a>

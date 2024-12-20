@@ -173,7 +173,7 @@ class FichiersequipesCrudController extends AbstractCrudController
 
         $concours == 1 ? $concourslit = 'national' : $concourslit = 'interacadémique';
         $concoursmemoire = $concourslit;
-        if (($concoursmemoire == 'interacadémique') and (new DateTime('now') > $edition->getConcoursCia())) {
+        if (($concoursmemoire == 'interacadémique') and (new DateTime('now') > $edition->getConcoursCn())) {
             $concoursmemoire = $concourslit . '(équipes non sélectionnées)';
         }
 

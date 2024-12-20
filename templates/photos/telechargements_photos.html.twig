@@ -1,0 +1,80 @@
+{% extends "base1.html.twig" %}
+{% block title %}Téléchargement des photos{% endblock %}
+
+{% block navigation %}
+    {% set centre=null %}
+    {% if is_granted('ROLE_ORGACIA') %}
+        {% set centre=app.user.centrecia %}
+    {% endif %}
+    {{ include ("cyberjuryCia/navigation.html.twig") }}
+
+{% endblock %}
+
+{% block titre3 %}
+    {% set centre=null %}
+    {% if is_granted('ROLE_ORGACIA') %}
+        {% set centre=app.user.centrecia %}
+    {% endif %}
+
+    Téléchargement des photos du centre de {{ centre.centre }}
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        {% if listePhotos!=null %}
+            <div class="row">
+                <div class="col-lg-2 sm-12">
+                    <a href="{{ path('photos_gestion_photos',{'infos':'inter-'~app.session.get('edition').id~'-'~centre.id~'-'}) }}"
+                       type="button" class="btn btn-primary">Vers la gestion des photos</a>
+
+                </div>
+                <div class="col-lg-2 sm-12">
+                    <form name="tout_telecherger" action="{{ path('telecharger_photos') }}" method="post">
+                        <input type="hidden" name="telecharger" value="telecharger">
+                        <input type="submit" class="btn btn-primary" value="Tout télécharger"
+                               title="Le volume important peut occasionner un dysfonctionnement">
+                    </form>
+                </div>
+                <div class="col-lg-8 sm-12">
+                    {{ form_start(form) }}
+                    {{ form_errors(form) }}
+                    {{ form_widget(form.valider, {'label':'Télécharger une sélection'}) }} <span
+                            style="font-size: small"> Cocher les cases des photos à télécharger. Pour
+                une seule photo cliquer sur la photo puis, avec un  clic droit sur la photo HD qui s'affiche, choisir "enregistrer l'image sous" </span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12 sm-12">
+                    <label for="checkAll">Tout cocher</label>
+                    <input type="Checkbox" id="checkAll" onclick="allcheck(this.checked);">
+
+                </div>
+            </div>
+            <div>Eviter le téléchargement d'un nombre de photos supérieur à 5, le volume très important rend l'opération
+                très lente avec des risques de dysfonctionnement
+            </div>
+            <div class="d-flex flex-wrap">
+                {% for photo in listePhotos %}
+                    <div class="p-2">
+                        {% for key in form.children|keys %}
+                            {% if  key == 'check'~photo.id %}
+                                {{ form_widget(form.children[key],{'label':'Eq'~  photo.equipe.numero, 'attr':{'z-index':1} }) }}
+
+                                <a href="{{ asset('odpf/odpf-archives/'~photo.edition.ed~'/photoseq/'~photo.photo) }}"
+                                   target="_blank">
+                                    <img src="{{ asset('odpf/odpf-archives/'~photo.edition.ed~'/photoseq/thumbs/'~photo.photo) }}"
+                                         class="zoom">
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+            {{ form_end(form) }}
+        {% else %}
+            <span style="text-align: center">Pas photo déposée pour ce centre pour le moment</span>
+        {% endif %}
+
+    </div>
+
+{% endblock %}

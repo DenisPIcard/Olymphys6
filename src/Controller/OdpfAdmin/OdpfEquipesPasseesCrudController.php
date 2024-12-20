@@ -83,7 +83,7 @@ use function Symfony\Component\String\u;
             TextField::new('palmares'),
             TextField::new('prix'),
             BooleanField::new('selectionnee'),
-            BooleanField::new('autorisationsPhotos')
+            BooleanField::new('autorisationsPhotos')->renderAsSwitch(true)
         ];
     }
 

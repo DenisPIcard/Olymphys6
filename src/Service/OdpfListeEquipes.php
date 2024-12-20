@@ -52,6 +52,8 @@ class OdpfListeEquipes
             ->select('e')
             ->andWhere('e.edition =:edition')
             ->setParameter('edition', $edition)
+            ->andWhere('e.numero <:numero')
+            ->setParameter('numero', 100)
             ->orderBy('e.numero', 'ASC');
 
         if ($choix!='la_carte_des_equipes') {//Toutes les équipes comptent pour la page de la carte même celles qui se sont désistées

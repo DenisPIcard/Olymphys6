@@ -450,27 +450,42 @@ class SecretariatjuryCiaController extends AbstractController
             $equipe = $this->doctrine->getRepository(Equipesadmin::class)->find($idequipe);
 
             if ($attrib == 'R') {
-                $jure->addEquipe($equipe);
+                $jure->addEquipe($equipe);//la fonction add contient le test d'existence de l'équipe dans la liste du juré
                 $rapporteur = $jure->getRapporteur();
-                if ($rapporteur == null) {
+                if ($rapporteur == []) {
                     $rapporteur[0] = $equipe->getNumero();
                     $jure->setRapporteur($rapporteur);
-                }
-                if (!in_array($equipe->getNumero(), $rapporteur)) {//le juré n'était pas rapporteur, il le devient
-                    $rapporteur[count($rapporteur)] = $equipe->getNumero();
+                } elseif (!in_array($equipe->getNumero(), $rapporteur)) {//le juré n'était pas rapporteur de cette équipe, il le devient
+                    $rapporteur[count($rapporteur)] = $equipe->getNumero();//on ajoute le numéro de l'équipe
                     $jure->setRapporteur($rapporteur);
+
+                }
+                $lecteur = $jure->getLecteur();//IL faut vérifier s'il n'était pas lecteur de cette équipe, sinon supprimer cette équipe des lecteurs
+
+                if (in_array($equipe->getNumero(), $lecteur)) {
+
+                    $key = array_keys($lecteur, $equipe->getNumero())[0];
+                    unset($lecteur[$key]);
+                    $jure->setLecteur($lecteur);
                 }
             }
             if ($attrib == 'L') {
                 $jure->addEquipe($equipe);
                 $lecteur = $jure->getLecteur();
-                if ($lecteur == null) {
+                if ($lecteur == []) {
                     $lecteur[0] = $equipe->getNumero();
                     $jure->setLecteur($lecteur);
-                }
-                if (!in_array($equipe->getNumero(), $lecteur)) {//le juré n'était pas lecteur , il le devient
+                } elseif (!in_array($equipe->getNumero(), $lecteur)) {//le juré n'était pas lecteur , il le devient
                     $lecteur[count($lecteur)] = $equipe->getNumero();
                     $jure->setLecteur($lecteur);
+
+                }
+                $rapporteur = $jure->getRapporteur();//IL faut vérifier s'il n'était pas rapporteur de cette équipe, sinon supprimer cette équipe des rapporteurs
+                if (in_array($equipe->getNumero(), $rapporteur)) {
+
+                    $key = array_keys($rapporteur, $equipe->getNumero())[0];
+                    unset($rapporteur[$key]);
+                    $jure->setRapporteur($rapporteur);
                 }
             }
             if ($attrib == 'E') {
@@ -478,13 +493,13 @@ class SecretariatjuryCiaController extends AbstractController
                 $jure->addEquipe($equipe);//la fonction add contient le test d'existence de l'équipe et ne l'ajoute que si elle n'est pas dans la liste des équipes du juré
                 $rapporteur = $jure->getRapporteur();
                 $lecteur = $jure->getLecteur();
-                if ($rapporteur !== null) {
+                if ($rapporteur !== []) {
                     if (in_array($equipe->getNumero(), $rapporteur)) {//On change l'attribution de l'équipe au juré : il n'est plus rapporteur
                         unset($rapporteur[array_search($equipe->getNumero(), $rapporteur)]);//supprime le numero de l'équipe dans la liste du champ rapporteur
                     }
                     $jure->setRapporteur($rapporteur);
                 }
-                if ($lecteur !== null) {
+                if ($lecteur !== []) {
                     if (in_array($equipe->getNumero(), $lecteur)) {//On change l'attribution de l'équipe au juré : il n'est plus lecteurr
                         unset($lecteur[array_search($equipe->getNumero(), $lecteur)]);//supprime le numero de l'équipe dans la liste du champ lecteur
                     }

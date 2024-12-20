@@ -131,8 +131,9 @@
     background-color: #facc15;
 
 }
+
 .zoom {
-    position:relative;
+    position: relative;
     width: 100px;
     z-index: 2;
     margin: 0 auto;

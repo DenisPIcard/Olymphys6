@@ -83,17 +83,17 @@ class SecretariatjuryController extends AbstractController
         }
         $repositoryEquipesadmin = $this->doctrine->getRepository(Equipesadmin::class);
         $repositoryEleves = $this->doctrine->getRepository(Elevesinter::class);
-        $repositoryUai = $this->doctrine->getRepository(Uai::class);
-        $listEquipes = $repositoryEquipesadmin->createQueryBuilder('e')
-            ->select('e')
-            ->andWhere('e.edition =:edition')
-            ->andWhere('e.numero <:numero')
-            ->setParameters(['edition' => $edition, 'numero' => 100])
-            ->andWhere('e.selectionnee= TRUE')
-            ->orderBy('e.lettre', 'ASC')
-            ->getQuery()
-            ->getResult();
-
+        $repositoryUai = $this->doctrine->getRepository(Uai::class);//les équipes de la table équipe
+        /* $listEquipes = $repositoryEquipesadmin->createQueryBuilder('e')//Cette partie corrigée le 16-12-24 :
+             ->select('e')
+             ->andWhere('e.edition =:edition')
+             ->andWhere('e.numero <:numero')
+             ->setParameters(['edition' => $edition, 'numero' => 100])
+             ->andWhere('e.selectionnee= TRUE')
+             ->orderBy('e.lettre', 'ASC')
+             ->getQuery()
+             ->getResult();*/
+        $listEquipes = $this->doctrine->getRepository(Equipes::class)->findAll();
         if($listEquipes == []){//Pour travailler sur les données de l'édition précédente avant le concours, les équipes ne sont pas connues alors
 
             $listEquipes=$this->doctrine->getRepository(Equipes::class)->findAll();

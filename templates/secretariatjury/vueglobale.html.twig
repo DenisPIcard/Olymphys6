@@ -29,7 +29,7 @@
                 {% set numligne = loop.index %} {# loop.index va de 1 à nb equipes ; numero de ligne #}
                 <tr>
                     <th>{{ listEquipes[numligne-1].equipeinter.lettre }}</th>
-
+                    {% if progression!= null %}
                     {% for j in 1..nbre_jures %} {# loop.index va de 1 à nb jurés; numero de colonne #}
                         {% set index = loop.index-1 %}
                         <td>
@@ -52,7 +52,7 @@
                             {% endif %}
                         </td>
                     {% endfor %}
-
+                    {% endif %}
                 </tr>
 
             {% endfor %}

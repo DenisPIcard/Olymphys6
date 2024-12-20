@@ -187,7 +187,7 @@ class EquipesadminRepository extends ServiceEntityRepository
         $concours == 'interacadémique' ? $qb->orderBy('e.numero', 'ASC') : $qb->orderBy('e.lettre', 'ASC');
 
 
-        if ((in_array('ROLE_JURY', $user->getRoles())) or (in_array('ROLE_JURYCIA', $user->getRoles())) or (in_array('ROLE_COMITE', $user->getRoles())) or (in_array('ROLE_ORGACIA', $user->getRoles())) or (in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+        if (in_array('ROLE_JURY', $user->getRoles()) or in_array('ROLE_JURYCIA', $user->getRoles()) or in_array('ROLE_COMITE', $user->getRoles()) or in_array('ROLE_ORGACIA', $user->getRoles()) or in_array('ROLE_SUPER_ADMIN', $user->getRoles()) or in_array('ROLE_SECRETARIAT_JURY', $user->getRoles())) {
 
             if ($centre != null) {
                 $listeEquipes = $this->getEquipeInter($centre);

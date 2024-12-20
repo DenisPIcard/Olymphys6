@@ -226,6 +226,7 @@ class ElevesinterCrudController extends AbstractCrudController
             yield TextField::new('courriel')->setSortable(true),
             yield TextField::new('genre'),
             yield TextField::new('classe')->hideOnIndex()->hideOnForm(),
+            yield TextField::new('equipe')->onlyOnIndex(),
             yield AssociationField::new('equipe')->setFormTypeOptions(['choices' => $listEquipes])->setSortable(true)->hideOnIndex(),
             yield AssociationField::new('autorisationphotos')->onlyOnDetail(),
             yield AssociationField::new('autorisationphotos', 'Autorisation photos')->onlyOnIndex()
@@ -531,7 +532,7 @@ class ElevesinterCrudController extends AbstractCrudController
         $liste_eleves = $queryBuilder->getQuery()->getResult();
         $zipFile = new ZipArchive();
         $now = new DateTime('now');
-        $fileNameZip = $edition->getEd() . '-Attestations_eleves_non_selectionnes-' . $now->format('d-m-Y\-His');
+        $fileNameZip = $edition->getEd() . '-Attestations_eleves_non_selectionnes-' . $now->format('d-m-Y\-His') . '.zip';
         if ($zipFile->open($fileNameZip, ZipArchive::CREATE) === TRUE) {
             foreach ($liste_eleves as $eleve) {
                 $phpWord = new  PhpWord();
@@ -691,7 +692,7 @@ class ElevesinterCrudController extends AbstractCrudController
         $liste_eleves = $queryBuilder->getQuery()->getResult();
         $zipFile = new ZipArchive();
         $now = new DateTime('now');
-        $fileNameZip = $edition->getEd() . '-Attestations_eleves_non_selectionnes-' . $now->format('d-m-Y\-His');
+        $fileNameZip = $edition->getEd() . '-Attestations_eleves_non_selectionnes-' . $now->format('d-m-Y\-His') . '.zip';
         if ($zipFile->open($fileNameZip, ZipArchive::CREATE) === TRUE) {
             if ($liste_eleves != null) {
                 foreach ($liste_eleves as $eleve) {
@@ -766,26 +767,39 @@ class ElevesinterCrudController extends AbstractCrudController
                     $y = $pdf->getY() + 10;
                     $pdf->SetXY($x, $y);
                     $pdf->Cell($w5 - 2, 10, $str4 . "\n", 0, 0, 'L');
-                    $pdf->SetTextColor(84, 173, 209);
+                    $pdf->SetTextColor(6, 100, 201);
                     $x = $pdf->getX() - 4;
                     $pdf->setX($x);
                     $pdf->SetFont('helvetica', 'B', 14);
                     $pdf->cell(0, 10, $str5, '', 'L');
                     $pdf->SetFont('helvetica', '', 14);
-                    $str6 = iconv('UTF-8', 'windows-1252', 'du lycée ' . $eleve->getEquipe()->getNomLycee());
+
+                    $nomlycee = $eleve->getEquipe()->getNomLycee();
+                    $coordination = 'du lycée';
+                    if (str_contains($nomlycee, 'lycee') or str_contains($nomlycee, 'Lycee')) {
+                        $nomlycee = str_replace('lycee', 'lycée', $nomlycee);
+                        $nomlycee = str_replace('Lycee', 'lycée', $nomlycee);
+                    }
+
+                    if (str_contains($nomlycee, 'lycée') or str_contains($nomlycee, 'Lycée')) {
+                        $nomlycee = str_replace('Lycée', 'lycée', $nomlycee);
+                        $coordination = 'du ';
+                    }
+                    $str6 = iconv('UTF-8', 'windows-1252', $coordination . $nomlycee);
                     $pdf->SetTextColor(0, 0, 0);
 
                     $w6 = $pdf->getStringWidth($str6);
-                    $w7 = $pdf->getStringWidth('du lycée ');
+
                     $x = (210 - $w6) / 2;
                     $y = $pdf->getY();
                     $pdf->SetXY($x, $y);
-                    $pdf->Cell($w7, 10, iconv('UTF-8', 'windows-1252', 'du lycée '), '', 'R');
-                    $x = $pdf->getX() + $w7 - 3;
+                    $w7 = $pdf->getStringWidth($coordination);
+                    $pdf->Cell($w7, 10, iconv('UTF-8', 'windows-1252', $coordination), '', 'R');
+                    $x = $pdf->getX() + $w7;
                     $pdf->SetXY($x, $y);
+                    $pdf->SetFont('helvetica', 'B', 14);
+                    $pdf->Cell(0, 10, iconv('UTF-8', 'windows-1252', $nomlycee), '', 'L');
                     $pdf->SetFont('helvetica', '', 14);
-                    $pdf->Cell(0, 10, iconv('UTF-8', 'windows-1252', $eleve->getEquipe()->getNomLycee()), '', 'L');
-
                     $str9 = 'à ' . $eleve->getEquipe()->getLyceeLocalite();
                     $w9 = $pdf->getStringWidth($str9);
                     $x = (210 - $w9) / 2;
@@ -820,7 +834,7 @@ class ElevesinterCrudController extends AbstractCrudController
                     }
                     $pdf->Write(8, iconv('UTF-8', 'windows-1252',
                         'a participé le ' .
-                        $this->date_in_french($this->requestStack->getSession()->get('edition')->getConcoursCia()->format('Y-m-d')) . ' au concours interacadémique de ' . $centre . ' ' .
+                        $this->date_in_french($this->requestStack->getSession()->get('edition')->getConcoursCia()->format('Y-m-d')) . ' au concours interacadémique de ' . $centre . ', ' .
                         $lieu . '.'
                     ));
 
@@ -861,24 +875,38 @@ class ElevesinterCrudController extends AbstractCrudController
                     $section->addTextBreak(1, ['bold' => true, 'size' => 14]);
                     $textrun2 = $section->addTextRun(['align' => 'center']);
                     $textrun2->addText('l’élève ', ['size' => 14,]);
-                    $textrun2->addText($eleve->getPrenom(), ['size' => 14, 'color' => '54add1', 'bold' => true]);
+                    $textrun2->addText($eleve->getPrenom(), ['size' => 14, 'color' => '0664c9', 'bold' => true]);
                     $textrun2->addText(' ', ['size' => 14,]);
-                    $textrun2->addText($eleve->getNom(), ['size' => 14, 'color' => '54add1', 'bold' => true]);
+                    $textrun2->addText($eleve->getNom(), ['size' => 14, 'color' => '0664c9', 'bold' => true]);
                     $section->addTextBreak(1, ['bold' => true, 'size' => 14]);
                     $textrun3 = $section->addTextRun(['align' => 'center']);
-                    $textrun3->addText('du lycée ', ['size' => 14]);
-                    $textrun3->addText($eleve->getequipe()->getNomLycee(), ['size' => 14]);
+                    $nomlycee = $eleve->getEquipe()->getNomLycee();
+                    $coordination = 'du lycée';
+                    if (str_contains($nomlycee, 'lycee') or str_contains($nomlycee, 'Lycee')) {
+                        $nomlycee = str_replace('lycee', 'lycée', $nomlycee);
+                        $nomlycee = str_replace('Lycee', 'lycée', $nomlycee);
+                    }
+
+                    if (str_contains($nomlycee, 'lycée') or str_contains($nomlycee, 'Lycée')) {
+                        $nomlycee = str_replace('Lycée', 'lycée', $nomlycee);
+                        $coordination = 'du ';
+                    }
+
+                    $textrun3->addText($coordination, ['size' => 14]);
+
+                    $textrun3->addText($nomlycee, ['size' => 14, 'bold' => true]);
                     $section->addTextBreak(1, ['bold' => true, 'size' => 14]);
                     $textrun4 = $section->addTextRun(['align' => 'center']);
                     $textrun4->addText('à ', ['size' => 14]);
                     $textrun4->addText($eleve->getequipe()->getLyceeLocalite(), ['size' => 14, 'bold' => true]);
                     $section->addTextBreak(1, ['bold' => true, 'size' => 14]);
                     $textrun5 = $section->addTextRun(['align' => 'center']);
+
                     $textrun5->addText('Académie de ' . $eleve->getEquipe()->getLyceeAcademie(), ['size' => 14,]);
 
                     $filesystem = new Filesystem();
                     $section->addTextBreak(1, ['bold' => true, 'size' => 14]);
-                    $section->addText('a participé le' . $this->date_in_french($this->requestStack->getSession()->get('edition')->getConcoursCia()->format('Y-m-d')) . ' au concours interacadémique de ' . $centre . ' ' . $lieu, ['size' => 14,]);
+                    $section->addText('a participé le ' . $this->date_in_french($this->requestStack->getSession()->get('edition')->getConcoursCia()->format('Y-m-d')) . ' au concours interacadémique de ' . $centre . ', ' . $lieu, ['size' => 14,]);
                     $section->addTextBreak(2, ['bold' => true, 'size' => 14]);
                     $section->addText('                     pour le Comité national des Olympiades de Physique France', ['size' => 12]);
                     $src2 = 'odpf/odpf-images/signature_gd_format.png';
@@ -977,7 +1005,7 @@ class ElevesinterCrudController extends AbstractCrudController
         $liste_eleves = $queryBuilder->getQuery()->getResult();
         $zipFile = new ZipArchive();
         $now = new DateTime('now');
-        $fileNameZip = $edition->getEd() . '-Attestations_eleves_non_selectionnes-' . $now->format('d-m-Y\-His');
+        $fileNameZip = $edition->getEd() . '-Attestations_eleves_non_selectionnes-' . $now->format('d-m-Y\-His') . '.zip';
         if ($zipFile->open($fileNameZip, ZipArchive::CREATE) === TRUE) {
             foreach ($liste_eleves as $eleve) {
                 $phpWord = new  PhpWord();
@@ -1020,7 +1048,7 @@ class ElevesinterCrudController extends AbstractCrudController
 
                 $filesystem = new Filesystem();
                 $section->addTextBreak(1, ['bold' => true, 'size' => 14]);
-                $section->addText('a participé le'.$this->date_in_french($edition->getConcourscia()->format('y-m-d')).' au concours interacadémique de ' . $eleve->getEquipe()->getCentre() . ' ' . $eleve->getEquipe()->getCentre()->getLieu(), ['size' => 14,]);
+                $section->addText('a participé le' . $this->date_in_french($edition->getConcourscia()->format('y-m-d')) . ' au concours interacadémique de ' . $eleve->getEquipe()->getCentre() . ', ' . $eleve->getEquipe()->getCentre()->getLieu(), ['size' => 14,]);
                 $section->addTextBreak(2, ['bold' => true, 'size' => 14]);
                 $section->addText('                     pour le Comité national des Olympiades de Physique France', ['size' => 12]);
                 $src2 = 'odpf/odpf-images/signature_gd_format.png';
@@ -1133,7 +1161,7 @@ class ElevesinterCrudController extends AbstractCrudController
         $liste_eleves = $queryBuilder->getQuery()->getResult();
         $zipFile = new ZipArchive();
         $now = new DateTime('now');
-        $fileNameZip = $edition->getEd() . '-Attestations_eleves_selectionnes-' . $now->format('d-m-Y\-His');
+        $fileNameZip = $edition->getEd() . '-Attestations_eleves_selectionnes-' . $now->format('d-m-Y\-His') . '.zip';
         if ($zipFile->open($fileNameZip, ZipArchive::CREATE) === TRUE) {
             if ($liste_eleves != null) {
                 foreach ($liste_eleves as $eleve) {
@@ -1445,7 +1473,7 @@ class ElevesinterCrudController extends AbstractCrudController
         $fichierspdf=[];
         $date = $this->date_in_french($edition->getConcoursCn()->format('Y-m-d'));
         $datedeb=$this->date_in_french($edition->getConcoursCn()->modify('-1 day')->format('Y-m-d'));
-        $fileNameZip = $edition->getEd() . '-Invitationss_eleves_selectionnes-' . $now->format('d-m-Y\-His');
+        $fileNameZip = $edition->getEd() . '-Invitationss_eleves_selectionnes-' . $now->format('d-m-Y\-His') . '.zip';
         if ($zipFile->open($fileNameZip, ZipArchive::CREATE) === TRUE) {
             foreach ($listeEleves as $eleve) {
                 $this->createinvitationCnWord($eleve,null,$eleve->getEquipe(),$edition,$datedeb, $date);
