@@ -20,7 +20,7 @@
 					<div class="aide" id="divAide">
 						<h4>Recherche standard</h4>
 						<p>Pour rechercher un rapport publié par les Olympiades De la Physique France,
-														                            Vous pouvez taper dans la zone de texte un ou plusieurs mots-clés séparés par des espaces.<br>
+																																			                            Vous pouvez taper dans la zone de texte un ou plusieurs mots-clés séparés par des espaces.<br>
 							Les documents proposés peuvent contenir un ou plusieurs mots demandés qui seront ordonnés :
 							<ul>
 								<li>par nombre de mots-clés trouvés décroissant</li>
@@ -108,15 +108,12 @@
 	</div>
 	{{ form_end(form) }}
 	<div id="result">
-		<p>
-			{% if occurence == null %}
-				aucune recherche effectuée...
-			{% elseif occurence == -1 %}
-				{{ statresult }}
+		
+			{% if occurence == -1 %}
+				<p>{{ statresult }}</p>
 			{% else %}
-				{{ statresult }},
-				{{ min(titre|length, nsecmax) }}
-				affichés :
+			<p>
+				{{ statresult }}
 			</p>
 			{% for i in 0..min(titre|length-1, nsecmax-1) %}
 				<h4 style="background-color: {{ backColor[i] }};">{{ titre[i] }}</h4>
